@@ -12,6 +12,27 @@ export interface StrategyConfig {
     baseCurrency: string;
   };
   timeframes: { trend: "4h"; execution: "1h"; minHistoryBars: number };
+  indicators: {
+    ema_fast_4h: number;
+    ema_slow_4h: number;
+    adx_4h: { period: number; minLong: number; minAltWhenBtcWeak: number };
+    emaSlopeLookback: number;
+    ema_pullback_1h: number;
+    rsi_1h: { period: number; min: number; max: number };
+    macd_1h: [number, number, number];
+    donchian_1h: number;
+    atr_1h: { period: number; avgPeriod: number; minRatio: number };
+    volumeSma_1h: number;
+    breakoutVolumeMult: number;
+    maxBarRangeAtrMult: number;
+    pullbackMaxDepthAtrMult: number;
+  };
+  entry: {
+    types: string[];
+    maxSpreadBps: number;
+    cooldownBars1h: number;
+    pyramiding: boolean;
+  };
   ops: {
     evaluateOnBarClose: boolean;
     stopOrdersOnExchange: boolean;
@@ -19,8 +40,8 @@ export interface StrategyConfig {
     reportSchedule: string;
     onUncertainty: string;
   };
-  // Qeyd: qalan bölmələrin (indicators, risk, exit...) dəqiq tipləri
-  // öz modulları yazılanda (Mərhələ 2-4) buraya əlavə olunacaq.
+  // Qeyd: qalan bölmələrin (risk, exit, portfolio...) dəqiq tipləri
+  // öz modulları yazılanda (Mərhələ 4-5) buraya əlavə olunacaq.
   [key: string]: unknown;
 }
 

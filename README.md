@@ -29,7 +29,7 @@ src/
   config/      strategiya konfiqurasiyası (source of truth)
   data/        DataLayer — birjadan şam datası (Mərhələ 1 ✅)
   indicators/  EMA, RSI, ATR, ADX, MACD, Donchian (Mərhələ 2 ✅)
-  signals/     SignalEngine — rejim + giriş qaydaları (Mərhələ 3)
+  signals/     SignalEngine — rejim + giriş qaydaları (Mərhələ 3 ✅)
   risk/        RiskManager — sizing + limitlər (Mərhələ 4)
   execution/   ExecutionEngine — paper trading (Mərhələ 5)
   reporting/   metrikalar, jurnal, hesabat (Mərhələ 6)

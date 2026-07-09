@@ -1,0 +1,114 @@
+{
+  "system": {
+    "name": "crypto-trend-dual-tf",
+    "version": "1.0.0",
+    "mode": "PAPER_TRADING",
+    "allowShort": false,
+    "baseCurrency": "USDT"
+  },
+  "universe": {
+    "source": "top-30-marketcap",
+    "exclude": [
+      "stablecoins",
+      "wrapped-tokens"
+    ],
+    "minAvgDailyVolumeUsd": 50000000,
+    "maxAssets": 20,
+    "rebalance": "weekly-monday-00:00-UTC"
+  },
+  "timeframes": {
+    "trend": "4h",
+    "execution": "1h",
+    "minHistoryBars": 300
+  },
+  "indicators": {
+    "ema_fast_4h": 50,
+    "ema_slow_4h": 200,
+    "adx_4h": {
+      "period": 14,
+      "minLong": 23,
+      "minAltWhenBtcWeak": 28
+    },
+    "emaSlopeLookback": 5,
+    "ema_pullback_1h": 21,
+    "rsi_1h": {
+      "period": 14,
+      "min": 40,
+      "max": 65
+    },
+    "macd_1h": [
+      12,
+      26,
+      9
+    ],
+    "donchian_1h": 20,
+    "atr_1h": {
+      "period": 14,
+      "avgPeriod": 50,
+      "minRatio": 0.7
+    },
+    "volumeSma_1h": 20,
+    "breakoutVolumeMult": 1.3,
+    "maxBarRangeAtrMult": 3.0,
+    "pullbackMaxDepthAtrMult": 1.5
+  },
+  "entry": {
+    "types": [
+      "PULLBACK",
+      "BREAKOUT"
+    ],
+    "maxSpreadBps": 10,
+    "cooldownBars1h": 2,
+    "pyramiding": false
+  },
+  "exit": {
+    "stopAtrMult": 1.8,
+    "tp1AtrMult": 1.8,
+    "tp1ClosePct": 50,
+    "breakevenAfterTp1": true,
+    "trailingAtrMult": 3.0,
+    "timeStopBars1h": 72,
+    "closeOnRegimeFlip": true
+  },
+  "risk": {
+    "riskPerTrade": 0.0075,
+    "maxNotionalPctPerPosition": 20,
+    "leverage": 1,
+    "dailyLossLimitPct": 3.0,
+    "maxConsecutiveLosses": 4,
+    "streakPauseHours": 12,
+    "weeklyHaltLossPct": 6.0
+  },
+  "portfolio": {
+    "maxOpenPositions": 6,
+    "maxTotalOpenRiskPct": 3.5,
+    "maxSameDirectionAltcoins": 4,
+    "signalPriority": "adx4h_desc"
+  },
+  "paperTrading": {
+    "initialEquityUsd": 10000,
+    "feePctPerSide": 0.10,
+    "slippage": {
+      "basePct": 0.05,
+      "impactModel": "volume-scaled"
+    },
+    "sameBarStopAndTp": "STOP_FIRST",
+    "minDays": 60,
+    "minClosedTrades": 100
+  },
+  "goLiveCriteria": {
+    "profitFactorMin": 1.35,
+    "maxDrawdownPct": 12,
+    "winRateMin": 0.38,
+    "avgRMultipleMin": 0.15,
+    "sharpeMin": 1.0,
+    "requiresExplicitUserApproval": true
+  },
+  "ops": {
+    "evaluateOnBarClose": true,
+    "stopOrdersOnExchange": true,
+    "quarantineOnDataGapHours": 24,
+    "reportSchedule": "weekly",
+    "onUncertainty": "DO_NOT_TRADE_LOG_AND_REPORT"
+  }
+}

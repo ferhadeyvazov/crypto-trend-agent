@@ -4,7 +4,7 @@ import { ExecutionEngine } from "./execution/ExecutionEngine.js";
 import type { TradeRecord } from "./execution/types.js";
 import { runCycle } from "./orchestrator/runCycle.js";
 import { msUntilNextHour, shouldRebalanceUniverse } from "./orchestrator/scheduler.js";
-import { JsonlLogger, createNodeFileWriter } from "./logging/index.js";
+import { JsonlLogger, createNodeFileWriter, type Logger } from "./logging/index.js";
 import { FileStatePersistence, createNodeFsStateDeps } from "./state/index.js";
 import type { PersistedState } from "./state/types.js";
 import {
@@ -28,6 +28,26 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * §13: "on restart, the agent first reads ... from the paper state file and
+ * restores its internal state. If restoration fails — HALT + report."
+ * Xəta baş verərsə burada process.exit çağırmırıq — sadəcə atırıq, main()-in
+ * özündəki ümumi catch bloku HALT (process.exit) məsuliyyətini daşıyır. Bu,
+ * try/catch-lə birbaşa `let` təyinatını qarışdırmaqdan yaranan kövrək
+ * control-flow asılılığından (process.exit-in `never` kimi tanınması) qaçır.
+ */
+async function loadPersistedState(
+  statePersistence: FileStatePersistence,
+  logger: Logger,
+): Promise<PersistedState | null> {
+  try {
+    return await statePersistence.load();
+  } catch (err) {
+    logger.error("State bərpası uğursuz oldu — sistem başladılmır (HALT)", { error: String(err) });
+    throw new Error(`State bərpası uğursuz oldu, sistem dayandırılır: ${String(err)}`);
+  }
+}
+
 async function main(): Promise<void> {
   const now = () => Date.now();
 
@@ -37,16 +57,7 @@ async function main(): Promise<void> {
   const logger = new JsonlLogger({ now, write: eventWriter });
   const appendTrade = (record: TradeRecord) => tradeWriter(JSON.stringify(record));
 
-  // §13: "on restart, the agent first reads ... from the paper state file
-  // and restores its internal state. If restoration fails — HALT + report."
-  let persisted: PersistedState | null;
-  try {
-    persisted = await statePersistence.load();
-  } catch (err) {
-    logger.error("State bərpası uğursuz oldu — sistem başladılmır (HALT)", { error: String(err) });
-    console.error(`KRİTİK: state bərpası uğursuz oldu, sistem dayandırılır: ${String(err)}`);
-    process.exit(1);
-  }
+  const persisted = await loadPersistedState(statePersistence, logger);
 
   const dataLayer = new BinanceDataLayer({ now });
   const executionEngine = persisted

@@ -10,7 +10,7 @@
 
 export const STABLECOIN_SYMBOLS = new Set([
   "USDT", "USDC", "DAI", "FDUSD", "TUSD", "BUSD", "USDD", "USDP",
-  "GUSD", "PYUSD", "USDE", "FRAX", "LUSD", "USTC", "EURT", "USDS",
+  "GUSD", "PYUSD", "USDE", "FRAX", "LUSD", "USTC", "EURT", "USDS", "USD1",
 ]);
 
 export const WRAPPED_TOKEN_SYMBOLS = new Set([

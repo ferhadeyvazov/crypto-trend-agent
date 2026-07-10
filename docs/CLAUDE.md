@@ -58,7 +58,7 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
 | 3 | SignalEngine: 4h rejim (R4.1–R4.3), 1h girişlər (5.1 Pullback A, 5.2 Breakout B), filtrlər F1–F4 | ✅ kod + 23 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ. F5 (§8 portfel limitləri) qəsdən Mərhələ 4-ə saxlanılıb |
 | 4 | RiskManager: sizing (§7), portfel limitləri (§8/F5), gündəlik/həftəlik/streak limit AŞKARLANMASI, BTC regime guard | ✅ kod + 25 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ. Limitlərin vaxt-əsaslı bərpası Mərhələ 5-ə saxlanılmışdı |
 | 5 | ExecutionEngine (paper): fill simulyasiyası (§10.3), fee+slippage modeli (§10.2), trade journal (§10.4), state machine (§9, o cümlədən Mərhələ 4-dən qalan zərər-limiti vaxt bərpası) | ✅ kod + 20 test yaşıl; istifadəçi təsdiqini gözləyir |
-| 6 | Reporting: metrikalar (§11), həftəlik hesabat, go-live kriteriya yoxlaması | ⬜ |
+| 6 | Reporting: metrikalar (§11), equity əyrisi, ən yaxşı/pis trade-lər, go-live kriteriya yoxlaması | ✅ kod + 19 test yaşıl; istifadəçi təsdiqini gözləyir. Rədd-siqnal statistikası və universe-dəyişiklikləri (bölmə 13 hesabatının hissələri) XARİC — data mənbəyi (rədd-log yığımı, Universe modulu) hələ tikilməyib |
 | — | 60 gün + min 100 trade paper trading; nəticələrin analizi | ⬜ |
 
 ## İş üslubu

@@ -32,7 +32,7 @@ src/
   signals/     SignalEngine — rejim + giriş qaydaları (Mərhələ 3 ✅)
   risk/        RiskManager — sizing + limitlər (Mərhələ 4 ✅)
   execution/   ExecutionEngine — paper trading (Mərhələ 5 ✅)
-  reporting/   metrikalar, jurnal, hesabat (Mərhələ 6)
+  reporting/   metrikalar, jurnal, hesabat (Mərhələ 6 ✅)
 tests/         unit testlər
 scripts/       köməkçi skriptlər (smoke test)
 ```

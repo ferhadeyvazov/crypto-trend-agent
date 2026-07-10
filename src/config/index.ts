@@ -65,6 +65,14 @@ export interface StrategyConfig {
     minDays: number;
     minClosedTrades: number;
   };
+  goLiveCriteria: {
+    profitFactorMin: number;
+    maxDrawdownPct: number;
+    winRateMin: number;
+    avgRMultipleMin: number;
+    sharpeMin: number;
+    requiresExplicitUserApproval: boolean;
+  };
   ops: {
     evaluateOnBarClose: boolean;
     stopOrdersOnExchange: boolean;
@@ -72,9 +80,6 @@ export interface StrategyConfig {
     reportSchedule: string;
     onUncertainty: string;
   };
-  // Qeyd: qalan bölmələrin (goLiveCriteria...) dəqiq tipləri öz modulları
-  // yazılanda (Mərhələ 6) buraya əlavə olunacaq.
-  [key: string]: unknown;
 }
 
 export const config = rawConfig as unknown as StrategyConfig;

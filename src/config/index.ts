@@ -33,6 +33,21 @@ export interface StrategyConfig {
     cooldownBars1h: number;
     pyramiding: boolean;
   };
+  risk: {
+    riskPerTrade: number;
+    maxNotionalPctPerPosition: number;
+    leverage: number;
+    dailyLossLimitPct: number;
+    maxConsecutiveLosses: number;
+    streakPauseHours: number;
+    weeklyHaltLossPct: number;
+  };
+  portfolio: {
+    maxOpenPositions: number;
+    maxTotalOpenRiskPct: number;
+    maxSameDirectionAltcoins: number;
+    signalPriority: string;
+  };
   ops: {
     evaluateOnBarClose: boolean;
     stopOrdersOnExchange: boolean;
@@ -40,8 +55,8 @@ export interface StrategyConfig {
     reportSchedule: string;
     onUncertainty: string;
   };
-  // Qeyd: qalan bölmələrin (risk, exit, portfolio...) dəqiq tipləri
-  // öz modulları yazılanda (Mərhələ 4-5) buraya əlavə olunacaq.
+  // Qeyd: qalan bölmələrin (exit, paperTrading, goLiveCriteria...) dəqiq
+  // tipləri öz modulları yazılanda (Mərhələ 5-6) buraya əlavə olunacaq.
   [key: string]: unknown;
 }
 

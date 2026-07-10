@@ -55,9 +55,9 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
 |---|---|---|
 | 1 | DataLayer (Binance fetch, closed-candle zəmanəti, gap→karantin, keş) | ✅ smoke test istifadəçidə uğurlu |
 | 2 | İndikatorlar (EMA, RSI, ATR, ADX, MACD, Donchian) + 3 qatlı validasiya | ✅ kod hazır; ✅ TradingView əl yoxlaması istifadəçi tərəfindən TƏSDİQLƏNDİ (BTCUSDT 1h/4h, ±0.5% daxilində) |
-| 3 | SignalEngine: 4h rejim (R4.1–R4.3), 1h girişlər (5.1 Pullback A, 5.2 Breakout B), filtrlər F1–F4 | ✅ kod + 23 test yaşıl; istifadəçi təsdiqini gözləyir. F5 (§8 portfel limitləri) qəsdən Mərhələ 4-ə saxlanılıb — spesifikasiyanın bölmə 9 pseudokodu bunu ayrıca `portfolioLimitsOk()` addımı kimi göstərir |
-| 4 | RiskManager: sizing (§7), portfel limitləri (§8/F5), gündəlik/həftəlik/streak limit AŞKARLANMASI, BTC regime guard | ✅ kod + 25 test yaşıl; istifadəçi təsdiqini gözləyir. Limitlərin vaxt-əsaslı bərpası (12h pauza, UTC gün dəyişimi) qəsdən Mərhələ 5-ə saxlanılıb — bu, real saat/state persistence tələb edir (ExecutionEngine-in state machine-i, §9) |
-| 5 | ExecutionEngine (paper): fill simulyasiyası (§10.3), fee+slippage modeli (§10.2), trade journal (§10.4), state machine (§9) | ⬜ |
+| 3 | SignalEngine: 4h rejim (R4.1–R4.3), 1h girişlər (5.1 Pullback A, 5.2 Breakout B), filtrlər F1–F4 | ✅ kod + 23 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ. F5 (§8 portfel limitləri) qəsdən Mərhələ 4-ə saxlanılıb |
+| 4 | RiskManager: sizing (§7), portfel limitləri (§8/F5), gündəlik/həftəlik/streak limit AŞKARLANMASI, BTC regime guard | ✅ kod + 25 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ. Limitlərin vaxt-əsaslı bərpası Mərhələ 5-ə saxlanılmışdı |
+| 5 | ExecutionEngine (paper): fill simulyasiyası (§10.3), fee+slippage modeli (§10.2), trade journal (§10.4), state machine (§9, o cümlədən Mərhələ 4-dən qalan zərər-limiti vaxt bərpası) | ✅ kod + 20 test yaşıl; istifadəçi təsdiqini gözləyir |
 | 6 | Reporting: metrikalar (§11), həftəlik hesabat, go-live kriteriya yoxlaması | ⬜ |
 | — | 60 gün + min 100 trade paper trading; nəticələrin analizi | ⬜ |
 

@@ -31,7 +31,7 @@ src/
   indicators/  EMA, RSI, ATR, ADX, MACD, Donchian (Mərhələ 2 ✅)
   signals/     SignalEngine — rejim + giriş qaydaları (Mərhələ 3 ✅)
   risk/        RiskManager — sizing + limitlər (Mərhələ 4 ✅)
-  execution/   ExecutionEngine — paper trading (Mərhələ 5)
+  execution/   ExecutionEngine — paper trading (Mərhələ 5 ✅)
   reporting/   metrikalar, jurnal, hesabat (Mərhələ 6)
 tests/         unit testlər
 scripts/       köməkçi skriptlər (smoke test)

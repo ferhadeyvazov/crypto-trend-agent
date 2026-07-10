@@ -21,6 +21,9 @@ npm-debug.log*
 /cache/
 .cache/
 
+# Paper-trading jurnalı (§10.4 — çalışma zamanı yaranan trade nəticələri, kod deyil)
+/paper-journal/
+
 # OS
 .DS_Store
 Thumbs.db

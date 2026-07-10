@@ -48,6 +48,23 @@ export interface StrategyConfig {
     maxSameDirectionAltcoins: number;
     signalPriority: string;
   };
+  exit: {
+    stopAtrMult: number;
+    tp1AtrMult: number;
+    tp1ClosePct: number;
+    breakevenAfterTp1: boolean;
+    trailingAtrMult: number;
+    timeStopBars1h: number;
+    closeOnRegimeFlip: boolean;
+  };
+  paperTrading: {
+    initialEquityUsd: number;
+    feePctPerSide: number;
+    slippage: { basePct: number; impactModel: string };
+    sameBarStopAndTp: "STOP_FIRST";
+    minDays: number;
+    minClosedTrades: number;
+  };
   ops: {
     evaluateOnBarClose: boolean;
     stopOrdersOnExchange: boolean;
@@ -55,8 +72,8 @@ export interface StrategyConfig {
     reportSchedule: string;
     onUncertainty: string;
   };
-  // Qeyd: qalan bölmələrin (exit, paperTrading, goLiveCriteria...) dəqiq
-  // tipləri öz modulları yazılanda (Mərhələ 5-6) buraya əlavə olunacaq.
+  // Qeyd: qalan bölmələrin (goLiveCriteria...) dəqiq tipləri öz modulları
+  // yazılanda (Mərhələ 6) buraya əlavə olunacaq.
   [key: string]: unknown;
 }
 

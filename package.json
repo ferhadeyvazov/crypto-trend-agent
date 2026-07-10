@@ -8,7 +8,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "tsx scripts/smoke.ts",
-    "validate": "tsx scripts/validate-tradingview.ts"
+    "validate": "tsx scripts/validate-tradingview.ts",
+    "start": "tsx src/main.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

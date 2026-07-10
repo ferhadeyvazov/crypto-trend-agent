@@ -11,6 +11,13 @@ export interface StrategyConfig {
     allowShort: boolean;
     baseCurrency: string;
   };
+  universe: {
+    source: string;
+    exclude: string[];
+    minAvgDailyVolumeUsd: number;
+    maxAssets: number;
+    rebalance: string;
+  };
   timeframes: { trend: "4h"; execution: "1h"; minHistoryBars: number };
   indicators: {
     ema_fast_4h: number;

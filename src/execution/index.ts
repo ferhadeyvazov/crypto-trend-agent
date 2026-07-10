@@ -22,6 +22,7 @@ export {
 export {
   ExecutionEngine,
   type ExecutionEngineDeps,
+  type ExecutionEngineSnapshot,
   type QueueEntryParams,
   type QueueEntryResult,
 } from "./ExecutionEngine.js";

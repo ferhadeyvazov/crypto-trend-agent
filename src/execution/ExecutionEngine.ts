@@ -56,6 +56,23 @@ function utcWeekKey(ms: number): string {
   return new Date(monday).toISOString();
 }
 
+/** §13 restart bərpası üçün: ExecutionEngine-in bütün daxili vəziyyətinin JSON-a uyğun görüntüsü. */
+export interface ExecutionEngineSnapshot {
+  positions: Position[];
+  equity: number;
+  systemStateInfo: SystemStateInfo;
+  consecutiveLosses: number;
+  dailyRealizedPnl: number;
+  weeklyRealizedPnl: number;
+  dailyEquityBase: number;
+  weeklyEquityBase: number;
+  currentDayKey: string | null;
+  currentWeekKey: string | null;
+  tradeCounter: number;
+  /** [symbol, sonBağlanmışTradeninCloseTime-i][] (F4 cooldown üçün) */
+  lastTradeCloseTimes: [string, number][];
+}
+
 export class ExecutionEngine {
   private positions = new Map<string, Position>();
   private equity: number;
@@ -68,6 +85,8 @@ export class ExecutionEngine {
   private currentDayKey: string | null = null;
   private currentWeekKey: string | null = null;
   private tradeCounter = 0;
+  /** F4 (cooldown) üçün: hər simvolun son bağlanmış trade-inin closeTime-i */
+  private lastTradeCloseTime = new Map<string, number>();
 
   constructor(private config: StrategyConfig, private deps: ExecutionEngineDeps) {
     this.equity = config.paperTrading.initialEquityUsd;
@@ -85,6 +104,52 @@ export class ExecutionEngine {
 
   getPosition(symbol: string): Position | undefined {
     return this.positions.get(symbol);
+  }
+
+  /** Bütün hazırda açıq pozisiyalar (RiskManager-in portfel yoxlaması üçün). */
+  getAllPositions(): Position[] {
+    return [...this.positions.values()];
+  }
+
+  /** F4 (cooldown) hesablaması üçün — heç trade olmayıbsa null. */
+  getLastTradeCloseTime(symbol: string): number | null {
+    return this.lastTradeCloseTime.get(symbol) ?? null;
+  }
+
+  /** §13 restart bərpası: cari vəziyyəti JSON-a uyğun formada çıxarır. */
+  exportState(): ExecutionEngineSnapshot {
+    return {
+      positions: this.getAllPositions(),
+      equity: this.equity,
+      systemStateInfo: this.systemStateInfo,
+      consecutiveLosses: this.consecutiveLosses,
+      dailyRealizedPnl: this.dailyRealizedPnl,
+      weeklyRealizedPnl: this.weeklyRealizedPnl,
+      dailyEquityBase: this.dailyEquityBase,
+      weeklyEquityBase: this.weeklyEquityBase,
+      currentDayKey: this.currentDayKey,
+      currentWeekKey: this.currentWeekKey,
+      tradeCounter: this.tradeCounter,
+      lastTradeCloseTimes: [...this.lastTradeCloseTime.entries()],
+    };
+  }
+
+  /** §13 restart bərpası: verilmiş snapshot-dan yeni ExecutionEngine yaradır. */
+  static restore(config: StrategyConfig, deps: ExecutionEngineDeps, snapshot: ExecutionEngineSnapshot): ExecutionEngine {
+    const engine = new ExecutionEngine(config, deps);
+    engine.positions = new Map(snapshot.positions.map((p) => [p.symbol, p]));
+    engine.equity = snapshot.equity;
+    engine.systemStateInfo = snapshot.systemStateInfo;
+    engine.consecutiveLosses = snapshot.consecutiveLosses;
+    engine.dailyRealizedPnl = snapshot.dailyRealizedPnl;
+    engine.weeklyRealizedPnl = snapshot.weeklyRealizedPnl;
+    engine.dailyEquityBase = snapshot.dailyEquityBase;
+    engine.weeklyEquityBase = snapshot.weeklyEquityBase;
+    engine.currentDayKey = snapshot.currentDayKey;
+    engine.currentWeekKey = snapshot.currentWeekKey;
+    engine.tradeCounter = snapshot.tradeCounter;
+    engine.lastTradeCloseTime = new Map(snapshot.lastTradeCloseTimes);
+    return engine;
   }
 
   /**
@@ -303,6 +368,7 @@ export class ExecutionEngine {
     };
     this.deps.appendTrade(record);
     this.positions.delete(pos.symbol);
+    this.lastTradeCloseTime.set(pos.symbol, candle.closeTime);
   }
 
   private directionalPnl(direction: SignalDirection, entryPrice: number, exitPrice: number, size: number): number {
@@ -327,9 +393,20 @@ export class ExecutionEngine {
     }
   }
 
+  /** RiskManager-in evaluateRisk-i üçün (Mərhələ 4) — orkestratorun real dəyərlərlə bağlaya bilməsi üçün. */
+  getDailyPnlPct(): number {
+    return this.dailyEquityBase > 0 ? (this.dailyRealizedPnl / this.dailyEquityBase) * 100 : 0;
+  }
+  getWeeklyPnlPct(): number {
+    return this.weeklyEquityBase > 0 ? (this.weeklyRealizedPnl / this.weeklyEquityBase) * 100 : 0;
+  }
+  getConsecutiveLosses(): number {
+    return this.consecutiveLosses;
+  }
+
   private refreshSystemState(nowMs: number): void {
-    const dailyPnlPct = this.dailyEquityBase > 0 ? (this.dailyRealizedPnl / this.dailyEquityBase) * 100 : 0;
-    const weeklyPnlPct = this.weeklyEquityBase > 0 ? (this.weeklyRealizedPnl / this.weeklyEquityBase) * 100 : 0;
+    const dailyPnlPct = this.getDailyPnlPct();
+    const weeklyPnlPct = this.getWeeklyPnlPct();
     const breach = checkLossLimits(dailyPnlPct, weeklyPnlPct, this.consecutiveLosses, this.config);
     this.systemStateInfo = evaluateSystemState(this.systemStateInfo, breach, nowMs, this.config);
   }

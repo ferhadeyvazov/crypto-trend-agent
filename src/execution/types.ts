@@ -13,7 +13,8 @@ export type ExitReason =
   | "X2_TP1" // yalnız partial close-un öz jurnal sətri olmadığı halda (aşağıya bax) tam bağlanış səbəbi kimi görünmür
   | "X3_TRAILING_STOP"
   | "X4_REGIME_FLIP"
-  | "X5_TIME_STOP";
+  | "X5_TIME_STOP"
+  | "MANUAL_CLOSE";
 
 /** Daxili, yaddaşda saxlanılan pozisiya vəziyyəti. */
 export interface Position {

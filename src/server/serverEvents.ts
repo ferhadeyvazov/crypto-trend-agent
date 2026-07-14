@@ -15,6 +15,8 @@ export interface ServerEventMap {
   "signal:new": Signal;
   "health:update": SystemHealth;
   "engine:state": { engineState: "running" | "paused"; stateChangedAt: number };
+  /** Mərhələ 9: yalnız Telegram Bridge üçün (dashboard socket.io-ya yayılmır — bax src/server/ws/index.ts). */
+  "error:critical": { message: string; ts: number };
 }
 
 export type ServerEvents = EventEmitter;

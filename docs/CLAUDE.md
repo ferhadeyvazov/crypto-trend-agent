@@ -84,3 +84,8 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
   ("Stage N: <ad>" formatında). main-ə merge yalnız Stage 8-dən sonra.
 - v1 backend kodunun davranışına toxunma — yalnız plandakı əlavələr
   (server/, shared/, dashboard/) və emit nöqtələrinin qoşulması.
+- **Stage 9 (Telegram Bridge, `src/server/telegram/`):** ✅ kod + testlər hazır,
+  `v2` branch-də commit/push olunub. Bot tokeni/`ALLOWED_CHAT_IDS` YALNIZ
+  `.env`-dədir (koda YAZILMIR). Canlı Telegram testi (mesaj gəlməsi, `/stop`
+  dashboard-da pauza kimi görünməsi) istifadəçinin öz bot tokeni ilə ediləcək —
+  bu təsdiqdən SONRA `v2` → `main` merge olunacaq.

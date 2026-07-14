@@ -18,6 +18,7 @@ import { HealthTracker } from "./health/HealthTracker.js";
 import { createApiApp } from "./server/api/app.js";
 import { createSocketServer } from "./server/ws/index.js";
 import { createServerEvents, emitServerEvent } from "./server/serverEvents.js";
+import { createTelegramBridge } from "./server/telegram/bot.js";
 import { toApiTrade } from "./server/storage-adapter/toApi.js";
 import type { RegimeSnapshot } from "../shared/types.js";
 
@@ -62,11 +63,15 @@ async function main(): Promise<void> {
   const tradeWriter = createNodeFileWriter(TRADES_FILE);
   const eventWriter = createNodeFileWriter(EVENTS_FILE);
   const eventLogger = new JsonlLogger({ now, write: eventWriter });
+  const serverEvents = createServerEvents();
   // HealthTracker JsonlLogger-i "decorate" edir (ERROR-ları /api/health üçün yaddaşda saxlayır) —
   // özü Logger interfeysini implement etdiyi üçün aşağıdakı bütün `logger.*` çağırışları dəyişmir.
-  const healthTracker = new HealthTracker(eventLogger, { now });
+  // onCriticalError: Mərhələ 9 — Telegram Bridge-in "error:critical" bildirişi üçün.
+  const healthTracker = new HealthTracker(eventLogger, {
+    now,
+    onCriticalError: (message) => emitServerEvent(serverEvents, "error:critical", { message, ts: now() }),
+  });
   const logger: Logger = healthTracker;
-  const serverEvents = createServerEvents();
 
   // Mərhələ 7: RegimeStrip/RegimeGrid üçün canlı snapshot — `runCycle`-ın hər simvol üçün
   // çağırdığı `onRegimeSnapshot`-dan doldurulur. Yalnız cari prosesin ömrü daxilində
@@ -154,6 +159,15 @@ async function main(): Promise<void> {
   });
   // socket.io — eyni http.Server (eyni port), REST-dən ayrı proses YOXDUR (Mərhələ 3).
   createSocketServer(httpServer, dataService, serverEvents);
+
+  // Telegram Bridge (Mərhələ 9) — TELEGRAM_BOT_TOKEN yoxdursa deaktiv qalır (dev-safe guard).
+  createTelegramBridge({
+    token: process.env.TELEGRAM_BOT_TOKEN,
+    allowedChatIdsEnv: process.env.ALLOWED_CHAT_IDS,
+    dataService,
+    serverEvents,
+    logger,
+  });
 
   console.log(`crypto-trend-agent başladı (rejim: ${config.system.mode})`);
 

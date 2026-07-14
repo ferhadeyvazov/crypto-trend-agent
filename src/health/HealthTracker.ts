@@ -24,6 +24,8 @@ export interface HealthTrackerDeps {
   now: () => number;
   maxRecentErrors?: number;
   maxRecentEvents?: number;
+  /** Mərhələ 9: hər ERROR-da çağırılır (Telegram Bridge-in "error:critical" hadisəsi bunu istifadə edir). */
+  onCriticalError?: (message: string) => void;
 }
 
 export class HealthTracker implements Logger {
@@ -71,6 +73,7 @@ export class HealthTracker implements Logger {
   error(message: string, data?: Record<string, unknown>): void {
     this.record("ERROR", message);
     this.inner.error(message, data);
+    this.deps.onCriticalError?.(message);
   }
 
   recordCycleCompleted(now: number): void {

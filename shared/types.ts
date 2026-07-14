@@ -12,10 +12,14 @@ export type PositionSide = "long" | "short";
 export interface PortfolioSummary {
   equity: number;
   dailyPnlPct: number;
+  /** Mərhələ 5: `dailyPnlPct`-in xam dollar məbləği (OverviewPage-in "Today's P&L" stat card-ı üçün). */
+  dailyPnlUsd: number;
   weeklyPnlPct: number;
   openPositionCount: number;
   /** Bütün açıq mövqələrin equity-ə nisbətən cəmi riski (fraksiya). */
   openRiskPct: number;
+  /** Mərhələ 5: (equity − ilkinEquity) / ilkinEquity × 100 — "Equity" stat card-ının "all-time" faizi. */
+  allTimePnlPct: number;
 }
 
 interface PositionCommon {

@@ -67,6 +67,8 @@ describe("Dashboard REST API", () => {
     expect(body.error).toBeNull();
     expect(body.data.equity).toBe(config.paperTrading.initialEquityUsd);
     expect(body.data.openPositionCount).toBe(0);
+    expect(body.data.dailyPnlUsd).toBe(0);
+    expect(body.data.allTimePnlPct).toBe(0); // equity === initialEquity, hələ trade yoxdur
   });
 
   it("GET /api/positions — yalnız fill olmuş pozisiyaları, unrealizedPnl ilə qaytarır", async () => {

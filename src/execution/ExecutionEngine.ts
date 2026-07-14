@@ -434,6 +434,10 @@ export class ExecutionEngine {
   getDailyPnlPct(): number {
     return this.dailyEquityBase > 0 ? (this.dailyRealizedPnl / this.dailyEquityBase) * 100 : 0;
   }
+  /** Dashboard `/api/portfolio`-nun dollar məbləği üçün (Mərhələ 5) — `getDailyPnlPct`-in xam ($) versiyası. */
+  getDailyRealizedPnl(): number {
+    return this.dailyRealizedPnl;
+  }
   getWeeklyPnlPct(): number {
     return this.weeklyEquityBase > 0 ? (this.weeklyRealizedPnl / this.weeklyEquityBase) * 100 : 0;
   }

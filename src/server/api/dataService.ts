@@ -63,12 +63,16 @@ export class DataService {
       0,
     );
 
+    const initialEquity = this.deps.config.paperTrading.initialEquityUsd;
+
     return {
       equity,
       dailyPnlPct: executionEngine.getDailyPnlPct(),
+      dailyPnlUsd: executionEngine.getDailyRealizedPnl(),
       weeklyPnlPct: executionEngine.getWeeklyPnlPct(),
       openPositionCount: filledPositions.length,
       openRiskPct,
+      allTimePnlPct: initialEquity > 0 ? ((equity - initialEquity) / initialEquity) * 100 : 0,
     };
   }
 

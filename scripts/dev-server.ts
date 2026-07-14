@@ -2,16 +2,19 @@ import { config } from "../src/config/index.js";
 import { ExecutionEngine } from "../src/execution/ExecutionEngine.js";
 import type { TradeRecord } from "../src/execution/types.js";
 import { HealthTracker } from "../src/health/HealthTracker.js";
-import { createServerEvents } from "../src/server/serverEvents.js";
+import { createServerEvents, emitServerEvent } from "../src/server/serverEvents.js";
 import { createApiApp } from "../src/server/api/app.js";
 import { createSocketServer } from "../src/server/ws/index.js";
+import { toApiTrade } from "../src/server/storage-adapter/toApi.js";
 
 // ===================================================================
-// Dashboard frontend inkişafı üçün FIXTURE server (Mərhələ 4). Real
+// Dashboard frontend inkişafı üçün FIXTURE server (Mərhələ 4-5). Real
 // `npm run start` (main.ts) ilə HEÇ BİR ƏLAQƏSİ YOXDUR — real
 // `paper-journal/`-a toxunmur, sırf saxta seed data ilə real
 // createApiApp/createSocketServer-i işə salır ki, `dashboard`-u real
 // trading loop-unu işə salmadan brauzerdə sınamaq mümkün olsun.
+// 10 saniyə sonra seed-lənmiş BTCUSDT mövqeyini avtomatik bağlayır ki,
+// closed-trade "flash" animasiyası canlı görünə bilsin (Mərhələ 5).
 // ===================================================================
 
 function mkCandle(i: number, open: number, high: number, low: number, close: number) {
@@ -21,20 +24,8 @@ function mkCandle(i: number, open: number, high: number, low: number, close: num
 async function main(): Promise<void> {
   process.env.CONTROL_TOKEN ??= "dev-token";
   const now = () => Date.now();
-
-  const trades: TradeRecord[] = [];
-  const executionEngine = new ExecutionEngine(config, { now, appendTrade: (r) => trades.push(r) });
-
-  // Seed: 1 açıq (fill olmuş) mövqe.
-  executionEngine.queueEntry({
-    symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK",
-    size: 0.05, atr1hAtSignal: 800, regime4h: "LONG_ONLY", adx4h: 30,
-  });
-  executionEngine.onBarClose("BTCUSDT", mkCandle(0, 67000, 67300, 66900, 67240), {
-    regime4h: "LONG_ONLY", atr1hCurrent: 800,
-  });
-
   const nowMs = now();
+
   const seedTrades: TradeRecord[] = [
     {
       id: "seed-1", symbol: "ETHUSDT", side: "LONG", signalType: "PULLBACK",
@@ -52,7 +43,6 @@ async function main(): Promise<void> {
       equityAfter: config.paperTrading.initialEquityUsd, regime4h: "LONG_ONLY", adx4h: 31, atr1h: 700,
     },
   ];
-
   const seedEvents = [
     { ts: nowMs - 300_000, level: "SIGNAL", message: "SOLUSDT: PULLBACK siqnalı (LONG)", data: { symbol: "SOLUSDT", timeframe: "1H", type: "PULLBACK", direction: "LONG", regime: "LONG_ONLY", adx4h: 29 } },
     { ts: nowMs - 3_600_000, level: "SIGNAL", message: "BTCUSDT: BREAKOUT siqnalı (LONG)", data: { symbol: "BTCUSDT", timeframe: "1H", type: "BREAKOUT", direction: "LONG", regime: "LONG_ONLY", adx4h: 31 } },
@@ -63,12 +53,31 @@ async function main(): Promise<void> {
     "events.jsonl": seedEvents.map((e) => JSON.stringify(e)).join("\n"),
   };
 
+  const serverEvents = createServerEvents();
+
+  // `appendTrade` faylı ("fayl") VƏ socket-i EYNİ anda yeniləyir — main.ts-dəki
+  // eyni pattern (bax src/main.ts) belə ki, demo bağlanışı GET /api/trades-də də görünsün.
+  const appendTrade = (record: TradeRecord) => {
+    files["trades.jsonl"] += `\n${JSON.stringify(record)}`;
+    emitServerEvent(serverEvents, "trade:closed", toApiTrade(record));
+  };
+
+  const executionEngine = new ExecutionEngine(config, { now, appendTrade });
+
+  // Seed: 1 açıq (fill olmuş) mövqe — 10 saniyə sonra avtomatik bağlanacaq (aşağı bax).
+  executionEngine.queueEntry({
+    symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK",
+    size: 0.05, atr1hAtSignal: 800, regime4h: "LONG_ONLY", adx4h: 30,
+  });
+  executionEngine.onBarClose("BTCUSDT", mkCandle(0, 67000, 67300, 66900, 67240), {
+    regime4h: "LONG_ONLY", atr1hCurrent: 800,
+  });
+
   const healthTracker = new HealthTracker(
     { log() {}, trade() {}, signal() {}, risk() {}, warn() {}, error() {} },
     { now },
   );
   healthTracker.recordCycleCompleted(now());
-  const serverEvents = createServerEvents();
 
   const { app, dataService } = createApiApp({
     executionEngine,
@@ -87,6 +96,21 @@ async function main(): Promise<void> {
     console.log(`Fixture dashboard API: http://localhost:${port} (CONTROL_TOKEN=${process.env.CONTROL_TOKEN})`);
   });
   createSocketServer(httpServer, dataService, serverEvents);
+
+  setTimeout(() => {
+    const pos = executionEngine.getPosition("BTCUSDT");
+    if (!pos) return;
+    const closeMs = now();
+    const exitCandle = { openTime: closeMs - 3_600_000, open: 67450, high: 67600, low: 67400, close: 67580, volume: 1000, closeTime: closeMs };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (executionEngine as any).closePosition(pos, exitCandle, 67580, 0, "X1_INITIAL_STOP");
+    // Real main.ts-də portfolio:update/position:update HƏR DÖVRƏ sonunda (saatbaşı) emit olunur,
+    // trade:closed-dən AYRI (bax Mərhələ 3) — fixture-də "dövrə" yoxdur, ona görə bağlanışdan
+    // sonra bu snapshot-ları əl ilə təkrarlayırıq ki, Overview də canlı sinxronlaşsın.
+    emitServerEvent(serverEvents, "portfolio:update", dataService.getPortfolio());
+    emitServerEvent(serverEvents, "position:update", dataService.getPositions());
+    console.log("Fixture: BTCUSDT canlı olaraq bağlandı (closed-trade animasiyası demo-su).");
+  }, 30_000);
 }
 
 main().catch((err) => {

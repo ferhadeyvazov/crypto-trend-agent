@@ -77,5 +77,9 @@
   "paused_banner": "Trading paused — new entries blocked, open positions still managed.",
   "copyright": "© 2026 Traiderim. All rights reserved.",
   "footer_note": "Paper trading only — not financial advice.",
-  "footer_docs": "Strategy spec"
+  "footer_docs": "Strategy spec",
+  "no_open_positions": "No open positions",
+  "no_trades": "No closed trades yet",
+  "loading": "Loading…",
+  "load_error": "Failed to load data"
 }

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { config } from "../src/config/index.js";
 import { ExecutionEngine } from "../src/execution/ExecutionEngine.js";
 import type { TradeRecord } from "../src/execution/types.js";
@@ -5,6 +6,7 @@ import { HealthTracker } from "../src/health/HealthTracker.js";
 import { createServerEvents, emitServerEvent } from "../src/server/serverEvents.js";
 import { createApiApp } from "../src/server/api/app.js";
 import { createSocketServer } from "../src/server/ws/index.js";
+import { createTelegramBridge } from "../src/server/telegram/bot.js";
 import { toApiTrade } from "../src/server/storage-adapter/toApi.js";
 import type { RegimeSnapshot } from "../shared/types.js";
 
@@ -113,6 +115,15 @@ async function main(): Promise<void> {
     console.log(`Fixture dashboard API: http://localhost:${port} (CONTROL_TOKEN=${process.env.CONTROL_TOKEN})`);
   });
   createSocketServer(httpServer, dataService, serverEvents);
+
+  // Telegram Bridge (Mərhələ 9) — TELEGRAM_BOT_TOKEN yoxdursa deaktiv qalır (dev-safe guard).
+  createTelegramBridge({
+    token: process.env.TELEGRAM_BOT_TOKEN,
+    allowedChatIdsEnv: process.env.ALLOWED_CHAT_IDS,
+    dataService,
+    serverEvents,
+    logger: healthTracker,
+  });
 
   // Canlı siqnal demo-su (Mərhələ 7 yoxlaması: "siqnal real vaxtda") — 15 saniyə sonra
   // yeni bir siqnal event.jsonl-ə əlavə olunur və `signal:new` emit edilir.

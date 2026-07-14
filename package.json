@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "smoke": "tsx scripts/smoke.ts",
     "validate": "tsx scripts/validate-tradingview.ts",
-    "start": "tsx src/main.ts"
+    "start": "tsx src/main.ts",
+    "dev:fixture": "tsx scripts/dev-server.ts"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^22.20.1",
     "socket.io-client": "^4.8.3",
@@ -23,6 +25,7 @@
     "vitest": "^2.1.0"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"

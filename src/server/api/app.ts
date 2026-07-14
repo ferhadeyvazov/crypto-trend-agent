@@ -1,4 +1,5 @@
 import express, { type Application, type Request, type Response, type NextFunction } from "express";
+import cors from "cors";
 import { DataService, type DataServiceDeps } from "./dataService.js";
 import { fail } from "./respond.js";
 import { portfolioRouter } from "./routes/portfolio.js";
@@ -24,6 +25,8 @@ export interface ApiApp {
 export function createApiApp(deps: DataServiceDeps): ApiApp {
   const dataService = new DataService(deps);
   const app = express();
+  // Dashboard dev-server (Vite, fərqli port) → API cross-origin sorğu edir (Mərhələ 4).
+  app.use(cors({ origin: process.env.DASHBOARD_ORIGIN ?? "http://localhost:5173" }));
   app.use(express.json());
 
   app.use("/api/portfolio", portfolioRouter(dataService));

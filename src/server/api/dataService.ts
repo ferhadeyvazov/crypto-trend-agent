@@ -16,6 +16,7 @@ import type {
   EquityPoint as ApiEquityPoint,
   SystemHealth as ApiSystemHealth,
   PortfolioSummary,
+  MetricsResponse,
 } from "../../../shared/types.js";
 
 const THIRTY_DAYS_MS = 30 * 24 * 3_600_000;
@@ -104,7 +105,7 @@ export class DataService {
     return filtered.map(toApiEquityPoint);
   }
 
-  async getMetrics() {
+  async getMetrics(): Promise<MetricsResponse> {
     const trades = await this.loadTrades();
     const startTime = this.inferStartTime(trades);
     const criticalErrorCount30d = this.deps.healthTracker.getErrorCountSince(this.deps.now() - THIRTY_DAYS_MS);

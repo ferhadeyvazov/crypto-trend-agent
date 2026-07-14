@@ -15,7 +15,9 @@ export function createSocketServer(
   dataService: DataService,
   serverEvents: ServerEvents,
 ): SocketIOServer {
-  const io = new SocketIOServer(httpServer);
+  const io = new SocketIOServer(httpServer, {
+    cors: { origin: process.env.DASHBOARD_ORIGIN ?? "http://localhost:5173" },
+  });
 
   io.on("connection", (socket) => {
     // Reconnect-də son vəziyyət (plan bölmə 8, Mərhələ 3) — YALNIZ bu socket-ə.

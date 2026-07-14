@@ -79,3 +79,29 @@ export interface SystemHealth {
   recentErrors: string[];
   stateLog: EngineStateLog[];
 }
+
+/** Mənbə: src/reporting/types.ts PerformanceMetrics (eyni sahələr) — GET /api/metrics cavabının bir hissəsi. */
+export interface PerformanceMetrics {
+  netPnl: number;
+  profitFactor: number;
+  maxDrawdownPct: number;
+  winRate: number;
+  avgRMultiple: number;
+  tradeCount: number;
+  durationDays: number;
+  sharpe: number;
+  criticalErrorCount30d: number;
+}
+
+/** Mənbə: src/reporting/types.ts GoLiveEvaluation (eyni sahələr) — GET /api/metrics cavabının bir hissəsi. */
+export interface GoLiveEvaluation {
+  eligible: boolean;
+  failed: string[];
+  requiresExplicitUserApproval: boolean;
+}
+
+/** GET /api/metrics tam cavabı. */
+export interface MetricsResponse {
+  metrics: PerformanceMetrics;
+  goLive: GoLiveEvaluation;
+}

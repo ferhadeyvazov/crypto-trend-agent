@@ -71,3 +71,16 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
   istifadəçiyə göstər.
 - Layihənin məqsədi strategiyanı "qazandırmaq" deyil, onun haqqında HƏQİQƏTİ
   ölçməkdir. Bu çərçivəni qoru.
+
+## v2 Dashboard işi (aktiv)
+- Plan: docs/TRAIDERIM_V2_PLAN.md — Build plan cədvəlinə DƏQİQ əməl et.
+  Plandakı "Qətiləşmiş qərarlar" bölməsi mübahisəsiz qaydalardır.
+- Dizayn: docs/design/traiderim-dashboard-mockup.html — rənglər, layout,
+  komponentlər və i18n mətnləri buradan götürülür, yenidən icad edilmir.
+- İş qaydası: BİR mərhələ = BİR iş vahidi. Mərhələ bitəndə DAYAN,
+  nə etdiyini xülasə et, yoxlama addımlarını göstər, təsdiqimi gözlə.
+  İcazəsiz növbəti mərhələyə keçmə, plandan kənar "yaxşılaşdırma" etmə.
+- Bütün iş v2 branch-ində. Hər mərhələnin sonunda commit
+  ("Stage N: <ad>" formatında). main-ə merge yalnız Stage 8-dən sonra.
+- v1 backend kodunun davranışına toxunma — yalnız plandakı əlavələr
+  (server/, shared/, dashboard/) və emit nöqtələrinin qoşulması.

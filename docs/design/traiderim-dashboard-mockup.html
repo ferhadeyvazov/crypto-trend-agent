@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traiderim — Dashboard Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1120; --panel:#111A2E; --panel-2:#16213B; --border:#243047;
+  --fg:#F1F5F9; --muted:#8A97AD;
+  --amber:#F59E0B; --green:#22C55E; --red:#EF4444; --neutral:#64748B;
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+.app{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+
+/* ---------- Sidebar (desktop) ---------- */
+.sidebar{
+  border-right:1px solid var(--border);padding:20px 12px;
+  display:flex;flex-direction:column;gap:4px;
+  position:sticky;top:0;height:100vh;
+}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 10px 18px}
+.logo-mark{width:28px;height:28px;border-radius:7px;background:var(--amber);
+  display:grid;place-items:center;color:#0B1120;font-family:var(--font-mono);font-weight:600;font-size:15px}
+.logo-name{font-weight:600;letter-spacing:.2px}
+.logo-ver{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-left:auto}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 10px;border:0;border-radius:8px;background:transparent;
+  color:var(--muted);font:inherit;font-weight:500;cursor:pointer;text-align:left;
+  transition:background .18s,color .18s;
+}
+.nav-btn:hover{background:var(--panel);color:var(--fg)}
+.nav-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.nav-btn.active{background:var(--panel-2);color:var(--fg)}
+.nav-btn.active svg{color:var(--amber)}
+.nav-btn svg{width:17px;height:17px;flex:none}
+.sidebar-foot{margin-top:auto;padding:10px;font-size:12px;color:var(--muted)}
+.sidebar-foot .num{color:var(--fg)}
+
+/* ---------- Bottom nav (mobile) ---------- */
+.bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:60;
+  background:rgba(17,26,46,.97);border-top:1px solid var(--border);
+  grid-template-columns:repeat(5,1fr);
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  backdrop-filter:blur(8px);
+}
+.bnav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  min-height:48px;justify-content:center;
+  border:0;background:transparent;border-radius:8px;cursor:pointer;
+  color:var(--muted);font:inherit;font-size:10px;font-weight:500;
+  transition:color .18s;
+}
+.bnav-btn svg{width:20px;height:20px}
+.bnav-btn.active{color:var(--amber)}
+.bnav-btn:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+/* ---------- Header ---------- */
+.main{display:flex;flex-direction:column;min-width:0}
+.header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 24px;border-bottom:1px solid var(--border)}
+.header h1{font-size:16px;font-weight:600}
+.header .sub{color:var(--muted);font-size:12px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.conn{display:flex;align-items:center;gap:8px;padding:6px 12px;
+  border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.dot.live{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.45)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+@media (prefers-reduced-motion:reduce){.dot.live{animation:none}}
+select.lang, select{
+  font:inherit;font-size:12px;color:var(--fg);background:var(--panel-2);
+  border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;
+}
+select:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* ---------- Engine control ---------- */
+.engine{display:flex;align-items:center;gap:8px}
+.engine-state{
+  display:flex;align-items:center;gap:7px;padding:6px 12px;
+  border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:600;
+}
+.engine-state .edot{width:8px;height:8px;border-radius:50%}
+.engine-state.running{color:var(--green)} .engine-state.running .edot{background:var(--green)}
+.engine-state.paused{color:var(--amber)}  .engine-state.paused .edot{background:var(--amber)}
+.engine-btn{
+  font:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  padding:7px 14px;border-radius:8px;transition:filter .15s;
+}
+.engine-btn:hover{filter:brightness(1.1)}
+.engine-btn:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.engine-btn.stop{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.4)}
+.engine-btn.start{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.4)}
+
+/* paused banner */
+.paused-banner{
+  display:none;align-items:center;gap:10px;
+  padding:10px 24px;font-size:13px;
+  background:rgba(245,158,11,.09);border-bottom:1px solid rgba(245,158,11,.35);
+  color:var(--amber);
+}
+.paused-banner svg{width:16px;height:16px;flex:none}
+body.paused .paused-banner{display:flex}
+
+/* ---------- Confirm dialog ---------- */
+.overlay{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(4,8,18,.7);backdrop-filter:blur(2px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.overlay.open{display:flex}
+.dialog{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:22px;max-width:400px;width:100%;
+}
+.dialog h3{font-size:16px;margin-bottom:8px}
+.dialog p{font-size:13px;color:var(--muted);margin-bottom:18px}
+.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
+.btn{
+  font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  padding:9px 16px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);transition:filter .15s,color .15s;
+  min-height:40px;
+}
+.btn:hover{color:var(--fg)}
+.btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.btn.primary-stop{background:var(--amber);color:#0B1120;border-color:var(--amber)}
+.btn.primary-start{background:var(--green);color:#0B1120;border-color:var(--green)}
+.btn.primary-stop:hover,.btn.primary-start:hover{filter:brightness(1.08);color:#0B1120}
+
+/* ---------- Regime strip ---------- */
+.regime-strip{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  padding:12px 24px;border-bottom:1px solid var(--border);background:rgba(17,26,46,.5)}
+.regime{flex:none;display:flex;align-items:center;gap:10px;
+  padding:8px 14px;border:1px solid var(--border);border-radius:8px;
+  background:var(--panel);cursor:pointer;transition:border-color .18s,background .18s}
+.regime:hover{border-color:var(--amber);background:var(--panel-2)}
+.regime:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.regime .sym{font-family:var(--font-mono);font-weight:600;font-size:13px}
+.regime .bars{display:flex;flex-direction:column;gap:3px}
+.rbar{width:34px;height:5px;border-radius:3px;background:var(--neutral)}
+.rbar.bull{background:var(--green)} .rbar.bear{background:var(--red)}
+.regime .lbl{font-size:10px;color:var(--muted);line-height:1.2}
+.legend{flex:none;display:flex;align-items:center;gap:12px;padding-left:8px;font-size:11px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:5px;border-radius:3px;display:inline-block}
+
+/* ---------- Content ---------- */
+.content{padding:24px;display:grid;gap:16px;flex:1}
+.page{display:none}
+.page.active{display:grid;gap:16px;align-content:start}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;min-width:0}
+.card h2{font-size:12px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.stat-value{font-family:var(--font-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat-delta{font-family:var(--font-mono);font-size:12px;margin-top:4px}
+.up{color:var(--green)} .down{color:var(--red)} .mut{color:var(--muted)}
+
+/* tables */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;min-width:560px;border-collapse:collapse;font-size:13px}
+th{color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid rgba(36,48,71,.55);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:var(--panel-2)}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.badge.long{background:rgba(34,197,94,.14);color:var(--green)}
+.badge.short{background:rgba(239,68,68,.14);color:var(--red)}
+.badge.rule{background:rgba(245,158,11,.12);color:var(--amber);font-family:var(--font-mono)}
+.badge.info{background:rgba(100,116,139,.18);color:#B6C2D6}
+
+/* signal feed */
+.feed{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow:auto}
+.sig{display:flex;gap:12px;padding:11px 12px;border:1px solid var(--border);
+  border-radius:8px;background:var(--panel-2)}
+.sig .t{font-family:var(--font-mono);font-size:11px;color:var(--muted);flex:none;width:44px}
+.sig .body{font-size:13px}
+.sig .body b{font-family:var(--font-mono);font-weight:600}
+.sig.new{border-color:rgba(245,158,11,.5)}
+
+/* chart */
+.chart-wrap{position:relative}
+.chart-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.range{margin-left:auto;display:flex;gap:6px}
+.range button{font:inherit;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  transition:color .15s,border-color .15s}
+.range button:hover{color:var(--fg)}
+.range button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.range button.on{border-color:var(--amber);color:var(--amber)}
+svg.chart{width:100%;height:auto;display:block}
+
+/* progress */
+.prog{margin-bottom:16px}
+.prog .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.prog .bar{height:8px;border-radius:5px;background:var(--panel-2);overflow:hidden}
+.prog .fill{height:100%;border-radius:5px;background:var(--amber)}
+
+/* health */
+.hgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.hitem{display:flex;align-items:center;gap:12px}
+.hicon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;flex:none}
+.hicon.ok{background:rgba(34,197,94,.12);color:var(--green)}
+.hicon.warn{background:rgba(245,158,11,.12);color:var(--amber)}
+.hicon svg{width:17px;height:17px}
+.log{font-family:var(--font-mono);font-size:12px;display:flex;flex-direction:column;gap:8px}
+.log div{display:flex;gap:12px;padding:8px 10px;border-radius:6px;background:var(--panel-2)}
+.log .lt{color:var(--muted);flex:none}
+.log .warn{color:var(--amber)} .log .err{color:var(--red)} .log .ok{color:var(--green)}
+
+/* filters */
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+
+/* ---------- Footer ---------- */
+.footer{
+  border-top:1px solid var(--border);padding:16px 24px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  font-size:12px;color:var(--muted);
+}
+.footer .num{color:var(--muted)}
+.footer .right{margin-left:auto;display:flex;gap:14px}
+.footer a{color:var(--muted);text-decoration:none;transition:color .15s}
+.footer a:hover{color:var(--fg)}
+.footer a:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .hgrid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .bottom-nav{display:grid}
+  .header{padding:12px 16px;gap:10px}
+  .header .sub{display:none}
+  .paused-banner{padding:10px 16px}
+  .regime-strip{padding:10px 16px}
+  .content{padding:16px;gap:12px;padding-bottom:88px}
+  .card{padding:14px}
+  .stat-value{font-size:20px}
+  .feed{max-height:280px}
+  .hgrid{grid-template-columns:1fr}
+  .footer{padding:14px 16px 90px;justify-content:center;text-align:center}
+  .footer .right{margin-left:0}
+}
+@media (max-width:480px){
+  .conn{display:none} /* yer engine control-a verilir — mobil üçün prioritet odur */
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ======= SIDEBAR (desktop) ======= -->
+  <nav class="sidebar" aria-label="Main navigation">
+    <div class="logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-name">Traiderim</div>
+      <div class="logo-ver">v2</div>
+    </div>
+    <button class="nav-btn active" data-page="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      <span data-i18n="nav_overview">Overview</span>
+    </button>
+    <button class="nav-btn" data-page="trades">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+      <span data-i18n="nav_trades">Trades</span>
+    </button>
+    <button class="nav-btn" data-page="signals">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg>
+      <span data-i18n="nav_signals">Signals</span>
+    </button>
+    <button class="nav-btn" data-page="performance">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <span data-i18n="nav_performance">Performance</span>
+    </button>
+    <button class="nav-btn" data-page="health">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 8-6-16-3 8H2"/></svg>
+      <span data-i18n="nav_health">Health</span>
+    </button>
+    <div class="sidebar-foot">
+      <span data-i18n="paper_day">Paper day</span> <span class="num">38</span>/60 · <span data-i18n="strategy">Strategy</span> <span class="num">v1.0</span>
+    </div>
+  </nav>
+
+  <!-- ======= MAIN ======= -->
+  <div class="main">
+    <header class="header">
+      <div>
+        <h1 id="page-title" data-i18n="nav_overview">Overview</h1>
+        <div class="sub" data-i18n="subtitle">Paper trading · dual-timeframe trend following</div>
+      </div>
+      <div class="header-right">
+        <!-- Engine control: status pill + action button -->
+        <div class="engine">
+          <span class="engine-state running" id="engine-state">
+            <span class="edot"></span><span id="engine-state-label" data-i18n="running">Running</span>
+          </span>
+          <button class="engine-btn stop" id="engine-btn" data-i18n="btn_stop">Stop trading</button>
+        </div>
+        <select class="lang" id="lang" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="az">AZ</option>
+          <option value="tr">TR</option>
+        </select>
+        <div class="conn"><span class="dot live"></span> <span data-i18n="live">Live</span> · <span data-i18n="updated">updated</span> <span class="num">4s</span> <span data-i18n="ago">ago</span></div>
+      </div>
+    </header>
+
+    <!-- Paused banner (pause-entries semantikası) -->
+    <div class="paused-banner" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+      <span data-i18n="paused_banner">Trading paused — new entries blocked, open positions still managed.</span>
+    </div>
+
+    <div class="regime-strip" role="list" aria-label="Market regimes">
+      <button class="regime" role="listitem"><span class="sym">BTC</span><span class="bars"><span class="rbar bull"></span><span class="rbar bull"></span></span><span class="lbl">4H bull<br>1H bull</span></button>
+      <button class="regime" role="listitem"><span class="sym">ETH</span><span class="bars"><span class="rbar bull"></span><span class="rbar"></span></span><span class="lbl">4H bull<br>1H neutral</span></button>
+      <button class="regime" role="listitem"><span class="sym">SOL</span><span class="bars"><span class="rbar bull"></span><span class="rbar bull"></span></span><span class="lbl">4H bull<br>1H bull</span></button>
+      <button class="regime" role="listitem"><span class="sym">BNB</span><span class="bars"><span class="rbar"></span><span class="rbar"></span></span><span class="lbl">4H neutral<br>1H neutral</span></button>
+      <button class="regime" role="listitem"><span class="sym">LINK</span><span class="bars"><span class="rbar bear"></span><span class="rbar bear"></span></span><span class="lbl">4H bear<br>1H bear</span></button>
+      <button class="regime" role="listitem"><span class="sym">AVAX</span><span class="bars"><span class="rbar bear"></span><span class="rbar"></span></span><span class="lbl">4H bear<br>1H neutral</span></button>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>bull</span>
+        <span><i style="background:var(--neutral)"></i>neutral</span>
+        <span><i style="background:var(--red)"></i>bear</span>
+      </div>
+    </div>
+
+    <main class="content">
+
+      <!-- ================= OVERVIEW ================= -->
+      <section class="page active" id="page-overview">
+        <div class="grid-4">
+          <div class="card">
+            <div class="stat-label" data-i18n="equity">Equity</div>
+            <div class="stat-value">$11,284.52</div>
+            <div class="stat-delta up">+12.85% <span data-i18n="all_time">all-time</span></div>
+          </div>
+          <div class="card">
+            <div class="stat-label" data-i18n="today_pnl">Today's P&L</div>
+            <div class="stat-value up">+$96.40</div>
+            <div class="stat-delta up">+0.86%</div>
+          </div>
+          <div class="card">
+            <div class="stat-label" data-i18n="unrealized_pnl">Unrealized P&L</div>
+            <div class="stat-value up">+$231.08</div>
+            <div class="stat-delta mut"><span class="num">2</span> <span data-i18n="open_pos_count">open positions</span></div>
+          </div>
+          <div class="card">
+            <div class="stat-label" data-i18n="risk_exposure">Risk exposure</div>
+            <div class="stat-value">1.6%</div>
+            <div class="stat-delta mut" data-i18n="at_stop">of equity at stop</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card chart-wrap">
+            <div class="chart-head">
+              <h2 style="margin:0" data-i18n="equity_curve">Equity curve</h2>
+              <div class="range">
+                <button class="on">30D</button><button>60D</button><button data-i18n="all">All</button>
+              </div>
+            </div>
+            <svg class="chart" viewBox="0 0 640 220" role="img" aria-label="Equity curve, last 30 days">
+              <defs>
+                <linearGradient id="eq" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F59E0B" stop-opacity=".22"/>
+                  <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="#243047" stroke-width="1">
+                <line x1="0" y1="55" x2="640" y2="55"/><line x1="0" y1="110" x2="640" y2="110"/><line x1="0" y1="165" x2="640" y2="165"/>
+              </g>
+              <rect x="300" y="0" width="90" height="220" fill="rgba(239,68,68,.06)"/>
+              <path d="M0,180 L40,172 L80,175 L120,160 L160,150 L200,142 L240,128 L280,120 L300,118 L330,138 L360,146 L390,132 L420,118 L460,104 L500,96 L540,84 L580,70 L640,58 L640,220 L0,220 Z" fill="url(#eq)"/>
+              <path d="M0,180 L40,172 L80,175 L120,160 L160,150 L200,142 L240,128 L280,120 L300,118 L330,138 L360,146 L390,132 L420,118 L460,104 L500,96 L540,84 L580,70 L640,58"
+                fill="none" stroke="#F59E0B" stroke-width="2"/>
+              <text x="308" y="16" fill="#8A97AD" font-size="10" font-family="JetBrains Mono">max DD −4.6%</text>
+            </svg>
+          </div>
+
+          <div class="card">
+            <h2 data-i18n="live_feed">Live signal feed</h2>
+            <div class="feed">
+              <div class="sig new"><span class="t">14:02</span><div class="body"><b>SOL</b> 1H entry long · <span class="badge rule">R-04</span></div></div>
+              <div class="sig"><span class="t">13:00</span><div class="body"><b>ETH</b> 1H exit · trailing stop hit</div></div>
+              <div class="sig"><span class="t">12:00</span><div class="body"><b>AVAX</b> 4H regime → <span class="down">bear</span></div></div>
+              <div class="sig"><span class="t">09:00</span><div class="body"><b>BTC</b> 1H entry long · <span class="badge rule">R-02</span></div></div>
+              <div class="sig"><span class="t">08:00</span><div class="body"><b>BNB</b> 4H regime → neutral</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="open_positions">Open positions</h2>
+          <div class="tbl">
+          <table>
+            <thead><tr>
+              <th data-i18n="th_symbol">Symbol</th><th data-i18n="th_side">Side</th>
+              <th data-i18n="th_entry">Entry</th><th data-i18n="th_size">Size</th>
+              <th data-i18n="th_stop">Stop</th><th data-i18n="th_target">Target</th>
+              <th data-i18n="th_upnl">Unrealized P&L</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="num">BTCUSDT</td><td><span class="badge long">LONG</span></td>
+                <td class="num">67,240.00</td><td class="num">0.031</td>
+                <td class="num down">65,980.00</td><td class="num up">70,120.00</td>
+                <td class="num up">+$168.42 (+0.81%)</td>
+              </tr>
+              <tr>
+                <td class="num">SOLUSDT</td><td><span class="badge long">LONG</span></td>
+                <td class="num">162.35</td><td class="num">7.4</td>
+                <td class="num down">155.90</td><td class="num up">176.80</td>
+                <td class="num up">+$62.66 (+0.52%)</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TRADES ================= -->
+      <section class="page" id="page-trades">
+        <div class="card">
+          <h2 data-i18n="closed_trades">Closed trades</h2>
+          <div class="filters">
+            <select aria-label="Filter by symbol"><option data-i18n="all_symbols">All symbols</option><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option></select>
+            <select aria-label="Filter by result"><option data-i18n="all_results">All results</option><option data-i18n="winners">Winners</option><option data-i18n="losers">Losers</option></select>
+          </div>
+          <div class="tbl">
+          <table>
+            <thead><tr>
+              <th data-i18n="th_closed">Closed</th><th data-i18n="th_symbol">Symbol</th>
+              <th data-i18n="th_side">Side</th><th data-i18n="th_entry_exit">Entry → Exit</th>
+              <th data-i18n="th_rule">Rule</th><th data-i18n="th_exit_reason">Exit reason</th>
+              <th>P&L</th>
+            </tr></thead>
+            <tbody>
+              <tr><td class="num">Jul 12 13:00</td><td class="num">ETHUSDT</td><td><span class="badge long">LONG</span></td><td class="num">3,412 → 3,486</td><td><span class="badge rule">R-02</span></td><td><span class="badge info">trailing stop</span></td><td class="num up">+$74.20</td></tr>
+              <tr><td class="num">Jul 11 21:00</td><td class="num">BTCUSDT</td><td><span class="badge long">LONG</span></td><td class="num">65,880 → 65,210</td><td><span class="badge rule">R-04</span></td><td><span class="badge info">stop loss</span></td><td class="num down">−$41.30</td></tr>
+              <tr><td class="num">Jul 10 17:00</td><td class="num">SOLUSDT</td><td><span class="badge long">LONG</span></td><td class="num">148.10 → 158.90</td><td><span class="badge rule">R-02</span></td><td><span class="badge info">take profit</span></td><td class="num up">+$112.75</td></tr>
+              <tr><td class="num">Jul 09 05:00</td><td class="num">LINKUSDT</td><td><span class="badge short">SHORT</span></td><td class="num">14.82 → 14.31</td><td><span class="badge rule">R-07</span></td><td><span class="badge info">take profit</span></td><td class="num up">+$48.90</td></tr>
+              <tr><td class="num">Jul 08 11:00</td><td class="num">BTCUSDT</td><td><span class="badge long">LONG</span></td><td class="num">64,120 → 63,660</td><td><span class="badge rule">R-02</span></td><td><span class="badge info">signal exit</span></td><td class="num down">−$28.60</td></tr>
+              <tr><td class="num">Jul 07 19:00</td><td class="num">ETHUSDT</td><td><span class="badge long">LONG</span></td><td class="num">3,318 → 3,401</td><td><span class="badge rule">R-04</span></td><td><span class="badge info">take profit</span></td><td class="num up">+$83.10</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SIGNALS ================= -->
+      <section class="page" id="page-signals">
+        <div class="grid-2">
+          <div class="card">
+            <h2 data-i18n="regime_by_symbol">4H regime by symbol</h2>
+            <div class="tbl">
+            <table>
+              <thead><tr>
+                <th data-i18n="th_symbol">Symbol</th><th>4H regime</th>
+                <th data-i18n="th_since">Since</th><th>1H bias</th>
+                <th data-i18n="th_last_signal">Last signal</th>
+              </tr></thead>
+              <tbody>
+                <tr><td class="num">BTCUSDT</td><td><span class="badge long">BULL</span></td><td class="num">Jul 05</td><td class="up">bull</td><td class="num">1H entry · 09:00</td></tr>
+                <tr><td class="num">ETHUSDT</td><td><span class="badge long">BULL</span></td><td class="num">Jul 06</td><td class="mut">neutral</td><td class="num">1H exit · 13:00</td></tr>
+                <tr><td class="num">SOLUSDT</td><td><span class="badge long">BULL</span></td><td class="num">Jul 03</td><td class="up">bull</td><td class="num">1H entry · 14:02</td></tr>
+                <tr><td class="num">BNBUSDT</td><td><span class="badge info">NEUTRAL</span></td><td class="num">Jul 12</td><td class="mut">neutral</td><td class="num">regime · 08:00</td></tr>
+                <tr><td class="num">LINKUSDT</td><td><span class="badge short">BEAR</span></td><td class="num">Jul 08</td><td class="down">bear</td><td class="num">1H entry · Jul 09</td></tr>
+                <tr><td class="num">AVAXUSDT</td><td><span class="badge short">BEAR</span></td><td class="num">Jul 12</td><td class="mut">neutral</td><td class="num">regime · 12:00</td></tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+          <div class="card">
+            <h2 data-i18n="signal_stream">Signal stream</h2>
+            <div class="feed" style="max-height:420px">
+              <div class="sig new"><span class="t">14:02</span><div class="body"><b>SOL</b> 1H entry long · <span class="badge rule">R-04</span> · EMA cross + ATR filter pass</div></div>
+              <div class="sig"><span class="t">13:00</span><div class="body"><b>ETH</b> 1H exit · trailing stop hit at <span class="num">3,486</span></div></div>
+              <div class="sig"><span class="t">12:00</span><div class="body"><b>AVAX</b> 4H regime flip → <span class="down">bear</span></div></div>
+              <div class="sig"><span class="t">09:00</span><div class="body"><b>BTC</b> 1H entry long · <span class="badge rule">R-02</span></div></div>
+              <div class="sig"><span class="t">08:00</span><div class="body"><b>BNB</b> 4H regime flip → neutral</div></div>
+              <div class="sig"><span class="t">04:00</span><div class="body"><b>SOL</b> 1H setup forming · awaiting confirmation</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PERFORMANCE ================= -->
+      <section class="page" id="page-performance">
+        <div class="grid-4">
+          <div class="card"><div class="stat-label" data-i18n="win_rate">Win rate</div><div class="stat-value">57.7%</div><div class="stat-delta mut">30 W / 22 L</div></div>
+          <div class="card"><div class="stat-label" data-i18n="profit_factor">Profit factor</div><div class="stat-value">1.84</div><div class="stat-delta mut" data-i18n="pf_desc">gross win / gross loss</div></div>
+          <div class="card"><div class="stat-label" data-i18n="max_dd">Max drawdown</div><div class="stat-value down">−4.6%</div><div class="stat-delta mut">Jun 28 – Jul 02</div></div>
+          <div class="card"><div class="stat-label" data-i18n="avg_r">Avg R multiple</div><div class="stat-value">+0.42R</div><div class="stat-delta mut" data-i18n="per_trade">per closed trade</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card chart-wrap">
+            <div class="chart-head"><h2 style="margin:0" data-i18n="equity_full">Equity curve — full paper period</h2></div>
+            <svg class="chart" viewBox="0 0 640 220" role="img" aria-label="Equity curve, full period">
+              <g stroke="#243047" stroke-width="1"><line x1="0" y1="55" x2="640" y2="55"/><line x1="0" y1="110" x2="640" y2="110"/><line x1="0" y1="165" x2="640" y2="165"/></g>
+              <path d="M0,200 L60,192 L120,196 L180,178 L240,168 L300,150 L330,168 L370,176 L420,150 L480,128 L540,100 L590,76 L640,58" fill="none" stroke="#F59E0B" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="card">
+            <h2 data-i18n="golive">Go-live progress</h2>
+            <div class="prog">
+              <div class="row"><span data-i18n="paper_days">Paper days</span><span class="num">38 / 60</span></div>
+              <div class="bar"><div class="fill" style="width:63%"></div></div>
+            </div>
+            <div class="prog">
+              <div class="row"><span data-i18n="closed_count">Closed trades</span><span class="num">52 / 100</span></div>
+              <div class="bar"><div class="fill" style="width:52%"></div></div>
+            </div>
+            <div class="prog">
+              <div class="row"><span data-i18n="dd_limit">Max DD within limit (&lt;8%)</span><span class="num up">✓ 4.6%</span></div>
+              <div class="bar"><div class="fill" style="width:100%;background:var(--green)"></div></div>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px" data-i18n="golive_note">
+              All three criteria must hold before go-live review. Paused days do not count as paper days. No parameter changes without a version bump and a fresh 60-day paper run.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HEALTH ================= -->
+      <section class="page" id="page-health">
+        <div class="card">
+          <h2 data-i18n="system_status">System status</h2>
+          <div class="hgrid">
+            <div class="hitem">
+              <div class="hicon ok" id="h-engine-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>
+              <div><div style="font-weight:600" data-i18n="engine">Engine</div><div class="mut" style="font-size:12px"><span id="h-engine-state" data-i18n="running">running</span> · <span data-i18n="since">since</span> <span class="num" id="h-engine-since">Jul 12 09:00</span></div></div>
+            </div>
+            <div class="hitem">
+              <div class="hicon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+              <div><div style="font-weight:600" data-i18n="scheduler">Scheduler</div><div class="mut" style="font-size:12px"><span data-i18n="running">running</span> · <span data-i18n="next_tick">next tick in</span> <span class="num">42s</span></div></div>
+            </div>
+            <div class="hitem">
+              <div class="hicon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 10l7-7 7 7"/></svg></div>
+              <div><div style="font-weight:600" data-i18n="data_feed">Data feed</div><div class="mut" style="font-size:12px"><span data-i18n="last_fetch">last fetch</span> <span class="num">12s</span> <span data-i18n="ago">ago</span> · Binance OK</div></div>
+            </div>
+            <div class="hitem">
+              <div class="hicon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+              <div><div style="font-weight:600">CoinGecko</div><div class="mut" style="font-size:12px"><span class="num">1</span> <span data-i18n="retry_hour">retry in last hour · fallback OK</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="state_log">Engine state log</h2>
+          <div class="log" id="engine-log">
+            <div><span class="lt">Jul 12 09:00</span><span class="ok">STARTED</span><span class="mut" data-i18n="manual">manual (dashboard)</span></div>
+            <div><span class="lt">Jul 11 22:15</span><span class="warn">PAUSED</span><span class="mut" data-i18n="manual">manual (dashboard)</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="recent_log">Recent log</h2>
+          <div class="log">
+            <div><span class="lt">14:02:11</span><span>INFO&nbsp; signal emitted SOLUSDT 1H entry R-04</span></div>
+            <div><span class="lt">14:00:03</span><span>INFO&nbsp; tick complete · 6 symbols · 412ms</span></div>
+            <div><span class="lt">13:14:47</span><span class="warn">WARN&nbsp; CoinGecko 429 · retried with Binance volume fallback</span></div>
+            <div><span class="lt">13:00:02</span><span>INFO&nbsp; position closed ETHUSDT · trailing stop</span></div>
+            <div><span class="lt">12:00:05</span><span>INFO&nbsp; 4H regime recomputed · AVAX bull→bear</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ======= FOOTER ======= -->
+    <footer class="footer">
+      <span data-i18n="copyright">© 2026 Traiderim. All rights reserved.</span>
+      <span>·</span>
+      <span data-i18n="footer_note">Paper trading only — not financial advice.</span>
+      <div class="right">
+        <span class="num">v2.0</span>
+        <a href="#" data-i18n="footer_docs">Strategy spec</a>
+        <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ======= BOTTOM NAV (mobile) ======= -->
+<nav class="bottom-nav" aria-label="Mobile navigation">
+  <button class="bnav-btn active" data-page="overview">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+    <span data-i18n="nav_overview">Overview</span>
+  </button>
+  <button class="bnav-btn" data-page="trades">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+    <span data-i18n="nav_trades">Trades</span>
+  </button>
+  <button class="bnav-btn" data-page="signals">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg>
+    <span data-i18n="nav_signals">Signals</span>
+  </button>
+  <button class="bnav-btn" data-page="performance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span data-i18n="nav_performance">Performance</span>
+  </button>
+  <button class="bnav-btn" data-page="health">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 8-6-16-3 8H2"/></svg>
+    <span data-i18n="nav_health">Health</span>
+  </button>
+</nav>
+
+<!-- ======= CONFIRM DIALOG ======= -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+  <div class="dialog">
+    <h3 id="dlg-title">Stop trading?</h3>
+    <p id="dlg-text">New entries will be blocked. Open positions remain managed (stop/target still active).</p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-cancel">Cancel</button>
+      <button class="btn primary-stop" id="dlg-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- i18n (mockup) — v2-də react-i18next olacaq ---------- */
+const dict = {
+  en: {
+    nav_overview:'Overview', nav_trades:'Trades', nav_signals:'Signals',
+    nav_performance:'Performance', nav_health:'Health',
+    subtitle:'Paper trading · dual-timeframe trend following',
+    live:'Live', updated:'updated', ago:'ago',
+    paper_day:'Paper day', strategy:'Strategy',
+    equity:'Equity', today_pnl:"Today's P&L", unrealized_pnl:'Unrealized P&L',
+    risk_exposure:'Risk exposure', at_stop:'of equity at stop',
+    all_time:'all-time', open_pos_count:'open positions',
+    equity_curve:'Equity curve', all:'All', live_feed:'Live signal feed',
+    open_positions:'Open positions', closed_trades:'Closed trades',
+    all_symbols:'All symbols', all_results:'All results', winners:'Winners', losers:'Losers',
+    th_symbol:'Symbol', th_side:'Side', th_entry:'Entry', th_size:'Size',
+    th_stop:'Stop', th_target:'Target', th_upnl:'Unrealized P&L',
+    th_closed:'Closed', th_entry_exit:'Entry → Exit', th_rule:'Rule',
+    th_exit_reason:'Exit reason', th_since:'Since', th_last_signal:'Last signal',
+    regime_by_symbol:'4H regime by symbol', signal_stream:'Signal stream',
+    win_rate:'Win rate', profit_factor:'Profit factor',
+    pf_desc:'gross win / gross loss', max_dd:'Max drawdown',
+    avg_r:'Avg R multiple', per_trade:'per closed trade',
+    equity_full:'Equity curve — full paper period',
+    golive:'Go-live progress', paper_days:'Paper days', closed_count:'Closed trades',
+    dd_limit:'Max DD within limit (<8%)',
+    golive_note:'All three criteria must hold before go-live review. Paused days do not count as paper days. No parameter changes without a version bump and a fresh 60-day paper run.',
+    system_status:'System status', scheduler:'Scheduler', running:'Running', paused:'Paused',
+    next_tick:'next tick in', data_feed:'Data feed', last_fetch:'last fetch',
+    retry_hour:'retry in last hour · fallback OK', recent_log:'Recent log',
+    engine:'Engine', since:'since', state_log:'Engine state log', manual:'manual (dashboard)',
+    btn_stop:'Stop trading', btn_start:'Start trading',
+    confirm_stop_title:'Stop trading?',
+    confirm_stop_text:'New entries will be blocked. Open positions remain managed (stop/target still active). Paused days will not count toward the 60-day paper period.',
+    confirm_start_title:'Start trading?',
+    confirm_start_text:'New entry signals will be executed again.',
+    cancel:'Cancel', confirm:'Confirm',
+    paused_banner:'Trading paused — new entries blocked, open positions still managed.',
+    copyright:'© 2026 Traiderim. All rights reserved.',
+    footer_note:'Paper trading only — not financial advice.',
+    footer_docs:'Strategy spec'
+  },
+  az: {
+    nav_overview:'İcmal', nav_trades:'Treydlər', nav_signals:'Siqnallar',
+    nav_performance:'Performans', nav_health:'Sağlamlıq',
+    subtitle:'Paper trading · ikili timeframe trend izləmə',
+    live:'Canlı', updated:'yeniləndi', ago:'əvvəl',
+    paper_day:'Paper günü', strategy:'Strategiya',
+    equity:'Kapital', today_pnl:'Bugünkü P&L', unrealized_pnl:'Reallaşmamış P&L',
+    risk_exposure:'Risk məruzəsi', at_stop:'kapitalın stop-dakı payı',
+    all_time:'ümumi', open_pos_count:'açıq mövqe',
+    equity_curve:'Kapital əyrisi', all:'Hamısı', live_feed:'Canlı siqnal axını',
+    open_positions:'Açıq mövqelər', closed_trades:'Bağlanmış treydlər',
+    all_symbols:'Bütün simvollar', all_results:'Bütün nəticələr', winners:'Qazananlar', losers:'Uduzanlar',
+    th_symbol:'Simvol', th_side:'İstiqamət', th_entry:'Giriş', th_size:'Ölçü',
+    th_stop:'Stop', th_target:'Hədəf', th_upnl:'Reallaşmamış P&L',
+    th_closed:'Bağlanma', th_entry_exit:'Giriş → Çıxış', th_rule:'Qayda',
+    th_exit_reason:'Çıxış səbəbi', th_since:'Tarixdən', th_last_signal:'Son siqnal',
+    regime_by_symbol:'Simvol üzrə 4H rejim', signal_stream:'Siqnal axını',
+    win_rate:'Qazanma faizi', profit_factor:'Profit faktoru',
+    pf_desc:'ümumi qazanc / ümumi zərər', max_dd:'Maks. drawdown',
+    avg_r:'Orta R misli', per_trade:'bağlanmış treyd başına',
+    equity_full:'Kapital əyrisi — tam paper dövrü',
+    golive:'Go-live progresi', paper_days:'Paper günləri', closed_count:'Bağlanmış treydlər',
+    dd_limit:'Maks. DD limit daxilində (<8%)',
+    golive_note:'Go-live baxışından əvvəl hər üç kriteriya ödənməlidir. Pauzada keçən günlər paper günü sayılmır. Version bump və yeni 60 günlük paper test olmadan parametr dəyişikliyi yoxdur.',
+    system_status:'Sistem statusu', scheduler:'Scheduler', running:'İşləyir', paused:'Pauzada',
+    next_tick:'növbəti tick', data_feed:'Data axını', last_fetch:'son fetch',
+    retry_hour:'son 1 saatda retry · fallback OK', recent_log:'Son loglar',
+    engine:'Engine', since:'tarixdən', state_log:'Engine state logu', manual:'manual (dashboard)',
+    btn_stop:'Ticarəti dayandır', btn_start:'Ticarətə başla',
+    confirm_stop_title:'Ticarəti dayandırmaq?',
+    confirm_stop_text:'Yeni girişlər bloklanacaq. Açıq mövqelər idarə olunmağa davam edəcək (stop/target aktiv qalır). Pauzada keçən günlər 60 günlük paper dövrünə sayılmayacaq.',
+    confirm_start_title:'Ticarətə başlamaq?',
+    confirm_start_text:'Yeni giriş siqnalları yenidən icra olunacaq.',
+    cancel:'İmtina', confirm:'Təsdiq',
+    paused_banner:'Ticarət pauzadadır — yeni girişlər bloklanıb, açıq mövqelər idarə olunur.',
+    copyright:'© 2026 Traiderim. Bütün hüquqlar qorunur.',
+    footer_note:'Yalnız paper trading — maliyyə məsləhəti deyil.',
+    footer_docs:'Strategiya spesifikasiyası'
+  },
+  tr: {
+    nav_overview:'Genel Bakış', nav_trades:'İşlemler', nav_signals:'Sinyaller',
+    nav_performance:'Performans', nav_health:'Sağlık',
+    subtitle:'Paper trading · çift zaman dilimli trend takibi',
+    live:'Canlı', updated:'güncellendi', ago:'önce',
+    paper_day:'Paper günü', strategy:'Strateji',
+    equity:'Sermaye', today_pnl:'Bugünkü P&L', unrealized_pnl:'Gerçekleşmemiş P&L',
+    risk_exposure:'Risk maruziyeti', at_stop:'stoptaki sermaye payı',
+    all_time:'tüm zamanlar', open_pos_count:'açık pozisyon',
+    equity_curve:'Sermaye eğrisi', all:'Tümü', live_feed:'Canlı sinyal akışı',
+    open_positions:'Açık pozisyonlar', closed_trades:'Kapanan işlemler',
+    all_symbols:'Tüm semboller', all_results:'Tüm sonuçlar', winners:'Kazananlar', losers:'Kaybedenler',
+    th_symbol:'Sembol', th_side:'Yön', th_entry:'Giriş', th_size:'Boyut',
+    th_stop:'Stop', th_target:'Hedef', th_upnl:'Gerçekleşmemiş P&L',
+    th_closed:'Kapanış', th_entry_exit:'Giriş → Çıkış', th_rule:'Kural',
+    th_exit_reason:'Çıkış nedeni', th_since:'Tarihinden', th_last_signal:'Son sinyal',
+    regime_by_symbol:'Sembole göre 4H rejim', signal_stream:'Sinyal akışı',
+    win_rate:'Kazanma oranı', profit_factor:'Kâr faktörü',
+    pf_desc:'brüt kazanç / brüt kayıp', max_dd:'Maks. drawdown',
+    avg_r:'Ort. R katı', per_trade:'kapanan işlem başına',
+    equity_full:'Sermaye eğrisi — tüm paper dönemi',
+    golive:'Go-live ilerlemesi', paper_days:'Paper günleri', closed_count:'Kapanan işlemler',
+    dd_limit:'Maks. DD limit içinde (<8%)',
+    golive_note:'Go-live incelemesinden önce üç kriter de sağlanmalıdır. Duraklatılan günler paper günü sayılmaz. Version bump ve yeni 60 günlük paper test olmadan parametre değişikliği yapılmaz.',
+    system_status:'Sistem durumu', scheduler:'Scheduler', running:'Çalışıyor', paused:'Duraklatıldı',
+    next_tick:'sonraki tick', data_feed:'Veri akışı', last_fetch:'son fetch',
+    retry_hour:'son 1 saatte retry · fallback OK', recent_log:'Son loglar',
+    engine:'Engine', since:'tarihinden', state_log:'Engine durum kaydı', manual:'manuel (dashboard)',
+    btn_stop:'İşlemi durdur', btn_start:'İşleme başla',
+    confirm_stop_title:'İşlem durdurulsun mu?',
+    confirm_stop_text:'Yeni girişler engellenecek. Açık pozisyonlar yönetilmeye devam edecek (stop/target aktif kalır). Duraklatılan günler 60 günlük paper dönemine sayılmayacak.',
+    confirm_start_title:'İşleme başlansın mı?',
+    confirm_start_text:'Yeni giriş sinyalleri yeniden yürütülecek.',
+    cancel:'İptal', confirm:'Onayla',
+    paused_banner:'İşlem duraklatıldı — yeni girişler engellendi, açık pozisyonlar yönetiliyor.',
+    copyright:'© 2026 Traiderim. Tüm hakları saklıdır.',
+    footer_note:'Yalnızca paper trading — yatırım tavsiyesi değildir.',
+    footer_docs:'Strateji spesifikasyonu'
+  }
+};
+
+let currentPage='overview';
+let engineRunning=true;
+const $=id=>document.getElementById(id);
+const t=()=>dict[$('lang').value]||dict.en;
+
+function applyLang(){
+  const d=t();
+  document.documentElement.lang=$('lang').value;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.dataset.i18n;
+    if(d[k]!==undefined) el.textContent=d[k];
+  });
+  $('page-title').textContent=d['nav_'+currentPage];
+  updateEngineUI(); // state-dən asılı mətnlər
+}
+$('lang').addEventListener('change',applyLang);
+
+/* ---------- navigation ---------- */
+document.querySelectorAll('[data-page]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    currentPage=btn.dataset.page;
+    document.querySelectorAll('[data-page]').forEach(b=>
+      b.classList.toggle('active',b.dataset.page===currentPage));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    $('page-'+currentPage).classList.add('active');
+    $('page-title').textContent=t()['nav_'+currentPage];
+    window.scrollTo({top:0});
+  });
+});
+
+/* ---------- Engine control (mockup) ----------
+   v2-də: POST /api/engine/start|stop (X-Control-Token ilə),
+   cavab engine:state socket hadisəsi ilə bütün client-lərə yayılır. */
+function updateEngineUI(){
+  const d=t();
+  const state=$('engine-state'), btn=$('engine-btn');
+  state.classList.toggle('running',engineRunning);
+  state.classList.toggle('paused',!engineRunning);
+  $('engine-state-label').textContent=engineRunning?d.running:d.paused;
+  btn.textContent=engineRunning?d.btn_stop:d.btn_start;
+  btn.classList.toggle('stop',engineRunning);
+  btn.classList.toggle('start',!engineRunning);
+  document.body.classList.toggle('paused',!engineRunning);
+  // Health səhifəsi
+  $('h-engine-state').textContent=engineRunning?d.running:d.paused;
+  $('h-engine-icon').classList.toggle('ok',engineRunning);
+  $('h-engine-icon').classList.toggle('warn',!engineRunning);
+}
+
+$('engine-btn').addEventListener('click',()=>{
+  const d=t();
+  $('dlg-title').textContent=engineRunning?d.confirm_stop_title:d.confirm_start_title;
+  $('dlg-text').textContent=engineRunning?d.confirm_stop_text:d.confirm_start_text;
+  $('dlg-cancel').textContent=d.cancel;
+  $('dlg-confirm').textContent=d.confirm;
+  $('dlg-confirm').className='btn '+(engineRunning?'primary-stop':'primary-start');
+  $('overlay').classList.add('open');
+  $('dlg-cancel').focus();
+});
+$('dlg-cancel').addEventListener('click',()=>$('overlay').classList.remove('open'));
+$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))$('overlay').classList.remove('open')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('overlay').classList.remove('open')});
+
+$('dlg-confirm').addEventListener('click',()=>{
+  engineRunning=!engineRunning;
+  $('overlay').classList.remove('open');
+  updateEngineUI();
+  // state log-a yeni qeyd (mockup — real vaxt möhürü ilə)
+  const now=new Date();
+  const stamp=now.toLocaleString('en-US',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+  const row=document.createElement('div');
+  row.innerHTML='<span class="lt">'+stamp+'</span><span class="'+(engineRunning?'ok':'warn')+'">'
+    +(engineRunning?'STARTED':'PAUSED')+'</span><span class="mut" data-i18n="manual">'+t().manual+'</span>';
+  $('engine-log').prepend(row);
+  $('h-engine-since').textContent=stamp;
+});
+
+updateEngineUI();
+</script>
+</body>
+</html>

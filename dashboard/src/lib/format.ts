@@ -28,6 +28,11 @@ export function formatDateTime(ms: number): string {
   });
 }
 
+/** Qrafik X-ox etiketləri üçün qısa tarix (Mərhələ 6) — `formatDateTime`-dan fərqli olaraq saat yoxdur. */
+export function formatDateShort(ms: number): string {
+  return new Date(ms).toLocaleString("en-US", { month: "short", day: "2-digit" });
+}
+
 export type PnlTone = "up" | "down" | "mut";
 
 /** Mockup-un `.up`/`.down`/`.mut` (yaşıl/qırmızı/solğun) rəng kodlaması. */

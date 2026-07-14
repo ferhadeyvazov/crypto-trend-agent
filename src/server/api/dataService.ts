@@ -114,7 +114,15 @@ export class DataService {
     const startTime = this.inferStartTime(trades);
     const criticalErrorCount30d = this.deps.healthTracker.getErrorCountSince(this.deps.now() - THIRTY_DAYS_MS);
     const report = buildPerformanceReport(trades, this.deps.config, { startTime, criticalErrorCount30d });
-    return { metrics: report.metrics, goLive: report.goLive };
+    return {
+      metrics: report.metrics,
+      goLive: report.goLive,
+      goLiveThresholds: {
+        minDays: this.deps.config.paperTrading.minDays,
+        minClosedTrades: this.deps.config.paperTrading.minClosedTrades,
+        maxDrawdownPct: this.deps.config.goLiveCriteria.maxDrawdownPct,
+      },
+    };
   }
 
   getHealth(): ApiSystemHealth {

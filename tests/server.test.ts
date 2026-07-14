@@ -119,6 +119,11 @@ describe("Dashboard REST API", () => {
     const metricsBody = await metricsRes.json();
     expect(metricsBody.data.metrics.tradeCount).toBe(0);
     expect(metricsBody.data.goLive.eligible).toBe(false);
+    expect(metricsBody.data.goLiveThresholds).toEqual({
+      minDays: config.paperTrading.minDays,
+      minClosedTrades: config.paperTrading.minClosedTrades,
+      maxDrawdownPct: config.goLiveCriteria.maxDrawdownPct,
+    });
   });
 
   it("GET /api/health — engineState/schedulerStatus gözlənilən defolt dəyərləri qaytarır", async () => {

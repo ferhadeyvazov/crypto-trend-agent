@@ -104,8 +104,21 @@ export interface GoLiveEvaluation {
   requiresExplicitUserApproval: boolean;
 }
 
+/**
+ * Mərhələ 6: go-live meyarlarının HƏDƏF ədədləri (`config/strategy.v1.json`-dan) —
+ * frontend-in GoLiveProgress bar-larını "cari/hədəf" formatında göstərməsi üçün.
+ * Bunlar strategiya parametrləridir (CLAUDE.md qayda 1: "kodda hardcode QADAĞANDIR"),
+ * ona görə frontend-də sabit yazılmır, backend-dən gəlir.
+ */
+export interface GoLiveThresholds {
+  minDays: number;
+  minClosedTrades: number;
+  maxDrawdownPct: number;
+}
+
 /** GET /api/metrics tam cavabı. */
 export interface MetricsResponse {
   metrics: PerformanceMetrics;
   goLive: GoLiveEvaluation;
+  goLiveThresholds: GoLiveThresholds;
 }

@@ -17,10 +17,6 @@ import { toApiTrade } from "../src/server/storage-adapter/toApi.js";
 // closed-trade "flash" animasiyası canlı görünə bilsin (Mərhələ 5).
 // ===================================================================
 
-function mkCandle(i: number, open: number, high: number, low: number, close: number) {
-  return { openTime: i * 3_600_000, open, high, low, close, volume: 1000, closeTime: (i + 1) * 3_600_000 - 1 };
-}
-
 async function main(): Promise<void> {
   process.env.CONTROL_TOKEN ??= "dev-token";
   const now = () => Date.now();
@@ -64,14 +60,20 @@ async function main(): Promise<void> {
 
   const executionEngine = new ExecutionEngine(config, { now, appendTrade });
 
-  // Seed: 1 açıq (fill olmuş) mövqe — 10 saniyə sonra avtomatik bağlanacaq (aşağı bax).
+  // Seed: 1 açıq (fill olmuş) mövqe — 30 saniyə sonra avtomatik bağlanacaq (aşağı bax).
+  // Qeyd: giriş şamının vaxtı REAL cari vaxta əsaslanır (`mkCandle`-in indeks-əsaslı
+  // epoch-a yaxın vaxtı YOX) — əks halda bağlananda `entryTime` epoch (1970) olar və
+  // `inferStartTime`/`durationDays` hesablamasını (Go-Live Progress) pozar.
   executionEngine.queueEntry({
     symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK",
     size: 0.05, atr1hAtSignal: 800, regime4h: "LONG_ONLY", adx4h: 30,
   });
-  executionEngine.onBarClose("BTCUSDT", mkCandle(0, 67000, 67300, 66900, 67240), {
-    regime4h: "LONG_ONLY", atr1hCurrent: 800,
-  });
+  const entryMs = nowMs - 3_600_000;
+  executionEngine.onBarClose(
+    "BTCUSDT",
+    { openTime: entryMs, open: 67000, high: 67300, low: 66900, close: 67240, volume: 1000, closeTime: entryMs + 3_599_999 },
+    { regime4h: "LONG_ONLY", atr1hCurrent: 800 },
+  );
 
   const healthTracker = new HealthTracker(
     { log() {}, trade() {}, signal() {}, risk() {}, warn() {}, error() {} },

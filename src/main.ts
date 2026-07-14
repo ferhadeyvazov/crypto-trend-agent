@@ -16,6 +16,9 @@ import {
 } from "./universe/index.js";
 import { HealthTracker } from "./health/HealthTracker.js";
 import { createApiApp } from "./server/api/app.js";
+import { createSocketServer } from "./server/ws/index.js";
+import { createServerEvents, emitServerEvent } from "./server/serverEvents.js";
+import { toApiTrade } from "./server/storage-adapter/toApi.js";
 
 // ===================================================================
 // Əsas giriş nöqtəsi (sənəd, bölmə 9 və 13). `npm run start` bunu işə salır.
@@ -62,7 +65,11 @@ async function main(): Promise<void> {
   // özü Logger interfeysini implement etdiyi üçün aşağıdakı bütün `logger.*` çağırışları dəyişmir.
   const healthTracker = new HealthTracker(eventLogger, { now });
   const logger: Logger = healthTracker;
-  const appendTrade = (record: TradeRecord) => tradeWriter(JSON.stringify(record));
+  const serverEvents = createServerEvents();
+  const appendTrade = (record: TradeRecord) => {
+    tradeWriter(JSON.stringify(record));
+    emitServerEvent(serverEvents, "trade:closed", toApiTrade(record));
+  };
 
   const persisted = await loadPersistedState(statePersistence, logger);
 
@@ -117,7 +124,7 @@ async function main(): Promise<void> {
   // Dashboard REST API (Mərhələ 2) — eyni prosesdə, aşağıdakı `for(;;)` icra
   // loop-u ilə paralel. `await`-lər event loop-u bloklamadığı üçün eyni prosesdə
   // HTTP server tamamilə mümkündür; server `executionEngine`-ə birbaşa referensla baxır.
-  const apiApp = createApiApp({
+  const { app: apiApp, dataService } = createApiApp({
     executionEngine,
     config,
     healthTracker,
@@ -126,23 +133,36 @@ async function main(): Promise<void> {
     tradesFilePath: TRADES_FILE,
     eventsFilePath: EVENTS_FILE,
     getCachedClose: (symbol) => dataLayer.getCachedClose(symbol),
+    serverEvents,
   });
   const apiPort = Number(process.env.PORT ?? 4000);
-  apiApp.listen(apiPort, () => {
+  const httpServer = apiApp.listen(apiPort, () => {
     console.log(`Dashboard API http://localhost:${apiPort} ünvanında dinləyir`);
   });
+  // socket.io — eyni http.Server (eyni port), REST-dən ayrı proses YOXDUR (Mərhələ 3).
+  createSocketServer(httpServer, dataService, serverEvents);
 
   console.log(`crypto-trend-agent başladı (rejim: ${config.system.mode})`);
 
   for (;;) {
     await refreshUniverseIfNeeded();
     try {
-      await runCycle(universe, { dataLayer, executionEngine, logger, config });
+      await runCycle(universe, {
+        dataLayer,
+        executionEngine,
+        logger,
+        config,
+        onSignal: (signal) => emitServerEvent(serverEvents, "signal:new", signal),
+      });
     } catch (err) {
       logger.error("Dövrə icra xətası", { error: String(err) });
     }
     await persistState();
     healthTracker.recordCycleCompleted(now());
+    // Dashboard canlı snapshot-ları — "canlı" bu sistemdə saatbaşı qranulyarlıqdadır (Mərhələ 3).
+    emitServerEvent(serverEvents, "portfolio:update", dataService.getPortfolio());
+    emitServerEvent(serverEvents, "position:update", dataService.getPositions());
+    emitServerEvent(serverEvents, "health:update", dataService.getHealth());
 
     const waitMs = msUntilNextHour(now());
     console.log(`Növbəti dövrə ${Math.round(waitMs / 1000)} saniyə sonra (equity: ${executionEngine.getEquity().toFixed(2)}, sistem: ${executionEngine.getSystemState()})`);

@@ -5,6 +5,7 @@ import { computeOpenRiskPct } from "../../risk/index.js";
 import { buildPerformanceReport } from "../../reporting/report.js";
 import { buildEquityCurve } from "../../reporting/equityCurve.js";
 import type { HealthTracker } from "../../health/HealthTracker.js";
+import { type ServerEvents, emitServerEvent } from "../serverEvents.js";
 import { readTrades } from "../storage-adapter/readTrades.js";
 import { readSignalEvents } from "../storage-adapter/readSignalEvents.js";
 import { toApiPosition, toApiTrade, toApiSignal, toApiEquityPoint, toApiSystemHealth } from "../storage-adapter/toApi.js";
@@ -29,6 +30,8 @@ export interface DataServiceDeps {
   eventsFilePath: string;
   /** Son keşlənmiş bağlanmış 1h şamın close-u (unrealizedPnl üçün) — BinanceDataLayer.getCachedClose. */
   getCachedClose: (symbol: string) => number | null;
+  /** `engine:state` hadisəsinin socket.io-ya yayılması üçün (Mərhələ 3) — bax src/server/serverEvents.ts. */
+  serverEvents: ServerEvents;
 }
 
 /**
@@ -115,11 +118,23 @@ export class DataService {
 
   startEngine(reason: string): ApiSystemHealth {
     this.deps.executionEngine.resumeEntries(reason, this.deps.now());
-    return this.getHealth();
+    const health = this.getHealth();
+    this.emitEngineState(health);
+    return health;
   }
 
   stopEngine(reason: string): ApiSystemHealth {
     this.deps.executionEngine.pauseEntries(reason, this.deps.now());
-    return this.getHealth();
+    const health = this.getHealth();
+    this.emitEngineState(health);
+    return health;
+  }
+
+  /** Bütün qoşulu dashboard client-ləri DƏRHAL xəbərdar etmək üçün (plan bölmə 6). */
+  private emitEngineState(health: ApiSystemHealth): void {
+    emitServerEvent(this.deps.serverEvents, "engine:state", {
+      engineState: health.engineState,
+      stateChangedAt: health.stateChangedAt,
+    });
   }
 }

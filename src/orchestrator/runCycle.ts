@@ -38,6 +38,8 @@ export interface OrchestratorDeps {
   getSpreadBps?: (symbol: string) => number;
   /** RiskManager-in minNotional-ı — defolt sabit dəyər */
   getMinNotional?: (symbol: string) => number;
+  /** Dashboard `signal:new` socket.io hadisəsi üçün (Mərhələ 3) — yeni giriş siqnalı TAPILANDA çağırılır. */
+  onSignal?: (signal: { symbol: string; timeframe: "1H"; type: string; createdAt: number }) => void;
 }
 
 interface SignalCandidate {
@@ -123,6 +125,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
       regime: regime4h,
       adx4h: evaluation.signal.adx4h,
     });
+    deps.onSignal?.({ symbol, timeframe: "1H", type: evaluation.signal.type, createdAt: lastCandle1h.closeTime });
 
     candidates.push({
       candidate: {

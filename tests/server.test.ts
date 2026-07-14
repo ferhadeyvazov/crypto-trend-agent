@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import { createApiApp } from "../src/server/api/app.js";
 import { ExecutionEngine } from "../src/execution/ExecutionEngine.js";
 import { HealthTracker } from "../src/health/HealthTracker.js";
+import { createServerEvents } from "../src/server/serverEvents.js";
 import { config } from "../src/config/index.js";
 import type { TradeRecord } from "../src/execution/types.js";
 
@@ -25,7 +26,7 @@ async function startTestServer(files: Record<string, string> = {}) {
   const executionEngine = new ExecutionEngine(config, { now, appendTrade: (r) => trades.push(r) });
   const healthTracker = new HealthTracker({ log() {}, trade() {}, signal() {}, risk() {}, warn() {}, error() {} }, { now });
 
-  const app = createApiApp({
+  const { app } = createApiApp({
     executionEngine,
     config,
     healthTracker,
@@ -34,6 +35,7 @@ async function startTestServer(files: Record<string, string> = {}) {
     tradesFilePath: "trades.jsonl",
     eventsFilePath: "events.jsonl",
     getCachedClose: () => 105,
+    serverEvents: createServerEvents(),
   });
 
   const server = app.listen(0);

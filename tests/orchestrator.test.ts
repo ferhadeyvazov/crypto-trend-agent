@@ -142,6 +142,23 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     expect(logger.events.some((e) => e.level === "RISK" && e.message.includes("növbəyə qoyuldu"))).toBe(true);
   });
 
+  it("yeni siqnal tapılanda onSignal (dashboard signal:new üçün) çağırılır", async () => {
+    const data = baseDataMap();
+    data.set("SOLUSDT|4h", buildModerateTrend4h());
+    data.set("SOLUSDT|1h", buildBreakout1h());
+
+    const { engine } = mkEngine();
+    const logger = new FakeLogger();
+    const signals: { symbol: string; timeframe: "1H"; type: string; createdAt: number }[] = [];
+    await runCycle(["BTCUSDT", "SOLUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      onSignal: (s) => signals.push(s),
+    });
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toMatchObject({ symbol: "SOLUSDT", timeframe: "1H", type: "BREAKOUT" });
+  });
+
   it("BTC zəifdirsə (NO_TRADE), moderate-ADX (28-dən az) altcoin BTC_REGIME_GUARD_ADX ilə rədd edilir", async () => {
     const data = new Map<string, Candle[]>([
       ["BTCUSDT|4h", buildChoppy4h()],

@@ -16,7 +16,12 @@ import { engineControlRouter } from "./routes/engineControl.js";
 // proses/IPC YOXDUR, `executionEngine`-ə birbaşa referens verilir.
 // ===================================================================
 
-export function createApiApp(deps: DataServiceDeps): Application {
+export interface ApiApp {
+  app: Application;
+  dataService: DataService;
+}
+
+export function createApiApp(deps: DataServiceDeps): ApiApp {
   const dataService = new DataService(deps);
   const app = express();
   app.use(express.json());
@@ -38,5 +43,5 @@ export function createApiApp(deps: DataServiceDeps): Application {
     fail(res, 500, err instanceof Error ? err.message : "Naməlum server xətası");
   });
 
-  return app;
+  return { app, dataService };
 }

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Crypto Trend-Following Trading System v1.0 - AI Agent (paper trading)",
   "type": "module",
+  "workspaces": [
+    "dashboard"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",

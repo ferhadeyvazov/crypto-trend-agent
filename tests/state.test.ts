@@ -85,4 +85,26 @@ describe("ExecutionEngine.exportState / restore — round-trip", () => {
     const restored = ExecutionEngine.restore(config, deps, engine.exportState());
     expect(restored.getLastTradeCloseTime("BTCUSDT")).toBe(lastTradeTime);
   });
+
+  it("manual pause-entries (Engine Control) və state log restart-dan sonra qorunur", () => {
+    const deps = { now: () => 1, appendTrade: () => {} };
+    const engine = new ExecutionEngine(config, deps);
+    engine.pauseEntries("manual (dashboard)", 500);
+
+    const restored = ExecutionEngine.restore(config, deps, engine.exportState());
+    expect(restored.isEntriesPaused()).toBe(true);
+    expect(restored.getEngineStateLog()).toEqual([{ paused: true, changedAt: 500, reason: "manual (dashboard)" }]);
+  });
+
+  it("köhnə (entriesPaused/engineStateLog sahələri olmayan) snapshot-dan defolt (pauzasız) bərpa olunur", () => {
+    const deps = { now: () => 1, appendTrade: () => {} };
+    const engine = new ExecutionEngine(config, deps);
+    const legacySnapshot = { ...engine.exportState() } as Record<string, unknown>;
+    delete legacySnapshot["entriesPaused"];
+    delete legacySnapshot["engineStateLog"];
+
+    const restored = ExecutionEngine.restore(config, deps, legacySnapshot as ReturnType<typeof engine.exportState>);
+    expect(restored.isEntriesPaused()).toBe(false);
+    expect(restored.getEngineStateLog()).toEqual([]);
+  });
 });

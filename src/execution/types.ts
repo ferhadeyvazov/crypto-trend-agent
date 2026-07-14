@@ -55,6 +55,18 @@ export interface Position {
   lastExitReason: ExitReason;
 }
 
+/**
+ * Manual pause-entries jurnalı (dashboard Engine Control, Mərhələ 2). Bu, sənədin
+ * §7/§9 avtomatik SystemState-indən (RUNNING/PAUSED_DAILY/PAUSED_STREAK/HALTED)
+ * TAMAMİLƏ ayrıdır — istifadəçinin dashboard/Telegram-dan əl ilə verdiyi
+ * start/stop əmrlərinin qeydidir, mövqe idarəsinə (stop/TP) təsir etmir.
+ */
+export interface EngineStateLogEntry {
+  paused: boolean;
+  changedAt: number;
+  reason: string;
+}
+
 /** Bölmə 10.4: append-only trade jurnalı sətri. */
 export interface TradeRecord {
   id: string;

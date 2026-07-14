@@ -10,6 +10,23 @@ import type { OpenPositionInfo, PortfolioCandidate, PortfolioLimitResult } from 
 // ayrıca `portfolioLimitsOk()` addımı kimi göstərilib).
 // ===================================================================
 
+/**
+ * Bir pozisiyanın equity-ə nisbətən açıq riski (fraksiya). `runCycle.ts`-də F5
+ * yoxlaması üçün, storage-adapter-də isə `/api/portfolio` risk məruzəsi üçün
+ * istifadə olunur — iki yerdə düstur təkrarlanmasın deyə çıxarılıb.
+ * `referencePrice`: pozisiyanın entryPrice-ı hələ fill olmayıbsa (PENDING_ENTRY,
+ * entryPrice=null) istifadə olunacaq anchor qiymət (çağıran verir).
+ */
+export function computeOpenRiskPct(
+  position: { originalSize: number; entryPrice: number | null; initialStop: number },
+  referencePrice: number,
+  equity: number,
+): number {
+  if (equity <= 0) return 0;
+  const anchorPrice = position.entryPrice ?? referencePrice;
+  return (position.originalSize * Math.abs(anchorPrice - position.initialStop)) / equity;
+}
+
 export function checkPortfolioLimits(
   candidate: PortfolioCandidate,
   openPositions: OpenPositionInfo[],

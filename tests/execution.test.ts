@@ -90,6 +90,48 @@ describe("ExecutionEngine — giriş fill-i", () => {
   });
 });
 
+describe("ExecutionEngine — manual pause-entries (Engine Control, dashboard/Telegram start/stop)", () => {
+  it("pauseEntries yeni girişi bloklayır, resumeEntries yenidən aktivləşdirir", () => {
+    const { engine } = makeEngine();
+    expect(engine.isEntriesPaused()).toBe(false);
+
+    engine.pauseEntries("manual (dashboard)", 1000);
+    expect(engine.isEntriesPaused()).toBe(true);
+
+    const blocked = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    expect(blocked).toEqual({ queued: false, reason: "ENTRIES_PAUSED" });
+
+    engine.resumeEntries("manual (dashboard)", 2000);
+    expect(engine.isEntriesPaused()).toBe(false);
+    const allowed = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    expect(allowed).toEqual({ queued: true });
+  });
+
+  it("hər start/stop EngineStateLog-a səbəb və vaxtla qeyd olunur", () => {
+    const { engine } = makeEngine();
+    engine.pauseEntries("manual (telegram)", 1000);
+    engine.resumeEntries("manual (dashboard)", 2000);
+
+    expect(engine.getEngineStateLog()).toEqual([
+      { paused: true, changedAt: 1000, reason: "manual (telegram)" },
+      { paused: false, changedAt: 2000, reason: "manual (dashboard)" },
+    ]);
+  });
+
+  it("pauza zamanı açıq pozisiyanın idarəsi (stop/TP) davam edir — yalnız YENİ giriş bloklanır", () => {
+    const { engine, trades } = makeEngine();
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
+
+    engine.pauseEntries("manual (dashboard)", 1000);
+    engine.onBarClose("TEST", mkCandle(1, 95, 96, 90, 91), { regime4h: "LONG_ONLY", atr1hCurrent: 4 }); // X1 stop
+
+    expect(engine.getPosition("TEST")).toBeUndefined();
+    expect(trades).toHaveLength(1);
+    expect(trades[0]!.exitReason).toBe("X1_INITIAL_STOP");
+  });
+});
+
 describe("ExecutionEngine — X1 ilkin stop", () => {
   it("stop toxunulanda (gap-siz) tam bağlanır, jurnal sətri dəqiq nəticə verir", () => {
     const { engine, trades } = makeEngine();

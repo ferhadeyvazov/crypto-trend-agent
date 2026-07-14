@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { config } from "./config/index.js";
 import { BinanceDataLayer } from "./data/binance/BinanceDataLayer.js";
 import { ExecutionEngine } from "./execution/ExecutionEngine.js";
@@ -13,6 +14,8 @@ import {
   BinanceVolumeSource,
   BinancePairChecker,
 } from "./universe/index.js";
+import { HealthTracker } from "./health/HealthTracker.js";
+import { createApiApp } from "./server/api/app.js";
 
 // ===================================================================
 // Əsas giriş nöqtəsi (sənəd, bölmə 9 və 13). `npm run start` bunu işə salır.
@@ -54,7 +57,11 @@ async function main(): Promise<void> {
   const statePersistence = new FileStatePersistence(STATE_FILE, createNodeFsStateDeps());
   const tradeWriter = createNodeFileWriter(TRADES_FILE);
   const eventWriter = createNodeFileWriter(EVENTS_FILE);
-  const logger = new JsonlLogger({ now, write: eventWriter });
+  const eventLogger = new JsonlLogger({ now, write: eventWriter });
+  // HealthTracker JsonlLogger-i "decorate" edir (ERROR-ları /api/health üçün yaddaşda saxlayır) —
+  // özü Logger interfeysini implement etdiyi üçün aşağıdakı bütün `logger.*` çağırışları dəyişmir.
+  const healthTracker = new HealthTracker(eventLogger, { now });
+  const logger: Logger = healthTracker;
   const appendTrade = (record: TradeRecord) => tradeWriter(JSON.stringify(record));
 
   const persisted = await loadPersistedState(statePersistence, logger);
@@ -107,6 +114,24 @@ async function main(): Promise<void> {
     }
   }
 
+  // Dashboard REST API (Mərhələ 2) — eyni prosesdə, aşağıdakı `for(;;)` icra
+  // loop-u ilə paralel. `await`-lər event loop-u bloklamadığı üçün eyni prosesdə
+  // HTTP server tamamilə mümkündür; server `executionEngine`-ə birbaşa referensla baxır.
+  const apiApp = createApiApp({
+    executionEngine,
+    config,
+    healthTracker,
+    now,
+    readFile: createNodeFsStateDeps().readFile,
+    tradesFilePath: TRADES_FILE,
+    eventsFilePath: EVENTS_FILE,
+    getCachedClose: (symbol) => dataLayer.getCachedClose(symbol),
+  });
+  const apiPort = Number(process.env.PORT ?? 4000);
+  apiApp.listen(apiPort, () => {
+    console.log(`Dashboard API http://localhost:${apiPort} ünvanında dinləyir`);
+  });
+
   console.log(`crypto-trend-agent başladı (rejim: ${config.system.mode})`);
 
   for (;;) {
@@ -117,6 +142,7 @@ async function main(): Promise<void> {
       logger.error("Dövrə icra xətası", { error: String(err) });
     }
     await persistState();
+    healthTracker.recordCycleCompleted(now());
 
     const waitMs = msUntilNextHour(now());
     console.log(`Növbəti dövrə ${Math.round(waitMs / 1000)} saniyə sonra (equity: ${executionEngine.getEquity().toFixed(2)}, sistem: ${executionEngine.getSystemState()})`);

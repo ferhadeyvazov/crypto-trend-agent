@@ -8,6 +8,16 @@
 
 export type PositionSide = "long" | "short";
 
+/** GET /api/portfolio cavabı (plan bölmə 1 MVP scope — TRAIDERIM_V2_PLAN.md bölmə 5-də ayrıca cədvəl sətri yoxdur, Mərhələ 2-də formalaşdırılıb). */
+export interface PortfolioSummary {
+  equity: number;
+  dailyPnlPct: number;
+  weeklyPnlPct: number;
+  openPositionCount: number;
+  /** Bütün açıq mövqələrin equity-ə nisbətən cəmi riski (fraksiya). */
+  openRiskPct: number;
+}
+
 interface PositionCommon {
   id: string;
   symbol: string;
@@ -47,12 +57,19 @@ export interface EquityPoint {
   equity: number;
 }
 
+/** Mənbə: Mərhələ 2-də ExecutionEngine-ə əlavə olunan manual pause-entries jurnalı (hər start/stop qeydi). */
+export interface EngineStateLog {
+  state: "running" | "paused";
+  changedAt: number;
+  reason: string;
+}
+
 /**
  * Mənbə: src/execution/systemState.ts SystemState/SystemStateInfo YALNIZ QİSMƏN uyğundur.
- * `engineState` BURADA manual pause-entries flag-idir (Feature 7, hələ backend-də yoxdur,
- * Mərhələ 2-də əlavə olunacaq) — daxili `SystemState` (RUNNING/PAUSED_DAILY/PAUSED_STREAK/HALTED)
+ * `engineState` BURADA manual pause-entries flag-idir (Feature 7, Mərhələ 2-də
+ * ExecutionEngine-ə əlavə olunur) — daxili `SystemState` (RUNNING/PAUSED_DAILY/PAUSED_STREAK/HALTED)
  * ilə QARIŞDIRILMAMALIDIR, o AVTOMATİK risk-halt mexanizmidir, ayrı konsepdir.
- * schedulerStatus/lastFetchAt/recentErrors üçün daxili mənbə yoxdur — yeni yaradılacaq.
+ * schedulerStatus/lastFetchAt/recentErrors — Mərhələ 2-nin HealthTracker-i mənbədir.
  */
 export interface SystemHealth {
   schedulerStatus: "running" | "stalled";
@@ -60,4 +77,5 @@ export interface SystemHealth {
   stateChangedAt: number;
   lastFetchAt: number;
   recentErrors: string[];
+  stateLog: EngineStateLog[];
 }

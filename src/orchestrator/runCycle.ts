@@ -6,6 +6,7 @@ import { computeRegime } from "../signals/regime.js";
 import { evaluateSignal } from "../signals/engine.js";
 import type { EntrySignalType, Regime, SignalDirection } from "../signals/types.js";
 import { evaluateRisk } from "../risk/engine.js";
+import { computeOpenRiskPct } from "../risk/portfolioLimits.js";
 import type { OpenPositionInfo, PortfolioCandidate } from "../risk/types.js";
 import { computeInitialStop } from "../execution/exitRules.js";
 import { atr as computeAtrSeries } from "../indicators/index.js";
@@ -94,7 +95,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
       continue; // F3: pozisiya açıqkən yeni giriş axtarılmır
     }
 
-    if (executionEngine.getSystemState() !== "RUNNING") continue;
+    if (executionEngine.getSystemState() !== "RUNNING" || executionEngine.isEntriesPaused()) continue;
     if (regime4h === "NO_TRADE") continue;
 
     const lastTradeCloseTime = executionEngine.getLastTradeCloseTime(symbol);
@@ -116,8 +117,10 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
 
     logger.signal(`${symbol}: ${evaluation.signal.type} siqnalı (${evaluation.signal.direction})`, {
       symbol,
+      timeframe: "1H",
       type: evaluation.signal.type,
       direction: evaluation.signal.direction,
+      regime: regime4h,
       adx4h: evaluation.signal.adx4h,
     });
 
@@ -147,7 +150,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
       symbol: p.symbol,
       direction: p.direction as SignalDirection,
       isCoreAsset: isCoreAsset(p.symbol),
-      openRiskPct: equity > 0 ? (p.originalSize * Math.abs((p.entryPrice ?? entryPriceEstimate) - p.initialStop)) / equity : 0,
+      openRiskPct: computeOpenRiskPct(p, entryPriceEstimate, equity),
     }));
 
     const riskEval = evaluateRisk(

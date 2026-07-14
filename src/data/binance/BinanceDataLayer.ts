@@ -114,6 +114,22 @@ export class BinanceDataLayer implements DataLayer {
     return result;
   }
 
+  /**
+   * Son keşlənmiş bağlanmış 1h şamın close qiyməti (dashboard-ın `/api/positions`
+   * unrealizedPnl hesablaması üçün, Mərhələ 2) — keşdə yoxdursa `null`.
+   */
+  getCachedClose(symbol: string): number | null {
+    let latest: Candle | null = null;
+    for (const [key, entry] of this.cache) {
+      if (!key.startsWith(`${symbol}|1h|`)) continue;
+      const candle = entry.candles[entry.candles.length - 1];
+      if (candle && (!latest || candle.closeTime > latest.closeTime)) {
+        latest = candle;
+      }
+    }
+    return latest ? latest.close : null;
+  }
+
   private putInQuarantine(symbol: string): void {
     this.quarantine.set(symbol, this.now() + this.quarantineMs);
   }

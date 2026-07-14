@@ -12,7 +12,7 @@ import {
 import { simulateEntryFill, resolveOpenFullBarOutcome, resolveOpenRunnerBarOutcome } from "./fillSimulation.js";
 import { computeCommission, computeSlippagePct, applySlippage } from "./costModel.js";
 import { evaluateSystemState, INITIAL_SYSTEM_STATE, type SystemStateInfo, type SystemState } from "./systemState.js";
-import type { Position, TradeRecord, ExitReason } from "./types.js";
+import type { Position, TradeRecord, ExitReason, EngineStateLogEntry } from "./types.js";
 
 // ===================================================================
 // ExecutionEngine (sənəd, bölmə 6, 9, 10). Per-asset pozisiya dövrəsini,
@@ -40,7 +40,7 @@ export interface QueueEntryParams {
 
 export interface QueueEntryResult {
   queued: boolean;
-  reason?: "SYSTEM_NOT_RUNNING" | "POSITION_ALREADY_OPEN";
+  reason?: "SYSTEM_NOT_RUNNING" | "ENTRIES_PAUSED" | "POSITION_ALREADY_OPEN";
 }
 
 function utcDayKey(ms: number): string {
@@ -71,6 +71,9 @@ export interface ExecutionEngineSnapshot {
   tradeCounter: number;
   /** [symbol, sonBağlanmışTradeninCloseTime-i][] (F4 cooldown üçün) */
   lastTradeCloseTimes: [string, number][];
+  /** Manual pause-entries (Engine Control, Mərhələ 2) — avtomatik SystemState-dən ayrı. */
+  entriesPaused: boolean;
+  engineStateLog: EngineStateLogEntry[];
 }
 
 export class ExecutionEngine {
@@ -87,6 +90,9 @@ export class ExecutionEngine {
   private tradeCounter = 0;
   /** F4 (cooldown) üçün: hər simvolun son bağlanmış trade-inin closeTime-i */
   private lastTradeCloseTime = new Map<string, number>();
+  /** Manual pause-entries (Engine Control, Mərhələ 2) — avtomatik SystemState-dən ayrı, dashboard/Telegram start/stop bunu idarə edir. */
+  private entriesPaused = false;
+  private engineStateLog: EngineStateLogEntry[] = [];
 
   constructor(private config: StrategyConfig, private deps: ExecutionEngineDeps) {
     this.equity = config.paperTrading.initialEquityUsd;
@@ -116,6 +122,28 @@ export class ExecutionEngine {
     return this.lastTradeCloseTime.get(symbol) ?? null;
   }
 
+  /** Manual pause-entries (Engine Control) hazırda aktivdirmi? */
+  isEntriesPaused(): boolean {
+    return this.entriesPaused;
+  }
+
+  /** Start/stop jurnalı — ən köhnədən ən yeniyə. */
+  getEngineStateLog(): EngineStateLogEntry[] {
+    return [...this.engineStateLog];
+  }
+
+  /** Dashboard/Telegram "stop" əmri: yeni girişlər dayanır, açıq mövqelər idarə olunmağa davam edir. */
+  pauseEntries(reason: string, now: number): void {
+    this.entriesPaused = true;
+    this.engineStateLog.push({ paused: true, changedAt: now, reason });
+  }
+
+  /** Dashboard/Telegram "start" əmri: yeni girişlər yenidən aktivləşir. */
+  resumeEntries(reason: string, now: number): void {
+    this.entriesPaused = false;
+    this.engineStateLog.push({ paused: false, changedAt: now, reason });
+  }
+
   /** §13 restart bərpası: cari vəziyyəti JSON-a uyğun formada çıxarır. */
   exportState(): ExecutionEngineSnapshot {
     return {
@@ -131,6 +159,8 @@ export class ExecutionEngine {
       currentWeekKey: this.currentWeekKey,
       tradeCounter: this.tradeCounter,
       lastTradeCloseTimes: [...this.lastTradeCloseTime.entries()],
+      entriesPaused: this.entriesPaused,
+      engineStateLog: [...this.engineStateLog],
     };
   }
 
@@ -149,6 +179,10 @@ export class ExecutionEngine {
     engine.currentWeekKey = snapshot.currentWeekKey;
     engine.tradeCounter = snapshot.tradeCounter;
     engine.lastTradeCloseTime = new Map(snapshot.lastTradeCloseTimes);
+    // `entriesPaused`/`engineStateLog` Mərhələ 2-də əlavə olunub — köhnə (bu sahələr
+    // olmayan) state fayllarından bərpada defolt (pauzasız, boş jurnal) istifadə olunur.
+    engine.entriesPaused = snapshot.entriesPaused ?? false;
+    engine.engineStateLog = snapshot.engineStateLog ?? [];
     return engine;
   }
 
@@ -159,6 +193,9 @@ export class ExecutionEngine {
   queueEntry(params: QueueEntryParams): QueueEntryResult {
     if (this.systemStateInfo.state !== "RUNNING") {
       return { queued: false, reason: "SYSTEM_NOT_RUNNING" };
+    }
+    if (this.entriesPaused) {
+      return { queued: false, reason: "ENTRIES_PAUSED" };
     }
     if (this.positions.has(params.symbol)) {
       return { queued: false, reason: "POSITION_ALREADY_OPEN" };

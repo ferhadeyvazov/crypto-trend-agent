@@ -9,6 +9,7 @@ import { signalsRouter } from "./routes/signals.js";
 import { equityCurveRouter } from "./routes/equityCurve.js";
 import { metricsRouter } from "./routes/metrics.js";
 import { healthRouter } from "./routes/health.js";
+import { regimesRouter } from "./routes/regimes.js";
 import { engineControlRouter } from "./routes/engineControl.js";
 
 // ===================================================================
@@ -36,6 +37,7 @@ export function createApiApp(deps: DataServiceDeps): ApiApp {
   app.use("/api/equity-curve", equityCurveRouter(dataService));
   app.use("/api/metrics", metricsRouter(dataService));
   app.use("/api/health", healthRouter(dataService));
+  app.use("/api/regimes", regimesRouter(dataService));
   app.use("/api/engine", engineControlRouter(dataService));
 
   app.use((_req: Request, res: Response) => {

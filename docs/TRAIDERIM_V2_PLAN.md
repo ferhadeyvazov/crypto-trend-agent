@@ -14,6 +14,14 @@
 - **Qat qaydası:** `Component → hook → api-client → lib/http.ts`. Komponentlər birbaşa axios çağırmır. Pozulma testi: API sahə adı dəyişəndə komponent faylına toxunmaq lazım gəlirsə, qatlar pozulub.
 - **i18n:** react-i18next, EN/AZ/TR. Texniki terminlər (P&L, drawdown, LONG, rule code) tərcümə olunmur.
 - **Dizayn:** dark "real-time monitoring" — bg `#0B1120`, panel `#111A2E`, border `#243047`, amber `#F59E0B`, green `#22C55E`, red `#EF4444`; Inter (UI) + JetBrains Mono tabular nums (rəqəmlər). İmza elementi: RegimeStrip (4H+1H bar-lar, bütün səhifələrdə). Mobil: bottom nav (≤820px), cədvəllər scroll wrapper-də. Footer: copyright + "not financial advice" + versiya.
+- **RegimeStrip düzəliş (mockup-u override edir):** Mockup-da "1H bias"
+  yazılıb — bu, spesifikasiyada mövcud olmayan uydurma ölçüdür, İGNOR ET.
+  Əvəzinə: üst göstərici = 4H regime (bull/bear/neutral), alt göstərici =
+  açıq mövqe statusu (long/short/yoxdur). Alt göstərici vizual olaraq
+  fərqli formada olmalıdır (bar deyil, dairə/nöqtə) ki, rejimlə
+  qarışmasın. Legend: "4H regime | position". Data mənbəyi:
+  /api/positions + position:update. RegimeGrid cədvəlindəki "1H bias"
+  sütunu → "Position" sütunu.
 - **Engine Control:** "Ticarəti dayandır" = **pause entries** — yeni girişlər icra olunmur, açıq mövqelər idarə olunmağa davam edir (stop/target işləyir). Full halt YOXDUR. Hər start/stop timestamp + səbəb ilə loglanır və Health-də görünür; pauzada keçən günlər paper günü sayılmır. Yazma endpoint-ləri `X-Control-Token` header-i (env-dən) tələb edir; UI-da təsdiq dialoqu məcburidir.
 - **Telegram Bridge:** bildirişlər və əmrlər üçün bot mövcud Node prosesinin İÇİNDƏ modul kimi işləyir (grammY) — Hermes və ya ayrıca servis YOXDUR. Bildirişlər socket.io emit nöqtələrinə qoşulur; `/stop` və `/start` əmrləri mövcud engine control funksiyalarını çağırır (eyni pause semantikası, eyni loglama). Yalnız icazəli chat ID-lər (env-dən) əmr verə bilər.
 - **AI rolu:** treyd qərarları LLM-ə verilmir — qərarlar deterministik mühərrikdə qalır. AI (Claude API) yalnız hesabat/analiz qatındadır (post-MVP `/report`).

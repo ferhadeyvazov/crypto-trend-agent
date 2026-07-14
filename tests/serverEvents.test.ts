@@ -26,6 +26,7 @@ function mkDataService() {
     eventsFilePath: "events.jsonl",
     getCachedClose: () => null,
     serverEvents,
+    getRegimeSnapshots: () => [],
   });
   return { dataService, serverEvents };
 }

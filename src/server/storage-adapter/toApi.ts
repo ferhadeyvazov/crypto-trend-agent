@@ -97,5 +97,6 @@ export function toApiSystemHealth(
       changedAt: e.changedAt,
       reason: e.reason,
     })),
+    recentEvents: healthTracker.getRecentEvents(),
   };
 }

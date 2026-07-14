@@ -81,5 +81,6 @@
   "no_open_positions": "Açıq mövqe yoxdur",
   "no_trades": "Hələ bağlanmış treyd yoxdur",
   "loading": "Yüklənir…",
-  "load_error": "Data yüklənmədi"
+  "load_error": "Data yüklənmədi",
+  "no_data": "Hələ data yoxdur"
 }

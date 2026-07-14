@@ -13,4 +13,5 @@ export const queryKeys = {
   equityCurve: (params: { from?: number; to?: number } = {}) => ["equityCurve", params] as const,
   metrics: ["metrics"] as const,
   health: ["health"] as const,
+  regimes: ["regimes"] as const,
 };

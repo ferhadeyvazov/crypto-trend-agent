@@ -19,6 +19,7 @@ import { createApiApp } from "./server/api/app.js";
 import { createSocketServer } from "./server/ws/index.js";
 import { createServerEvents, emitServerEvent } from "./server/serverEvents.js";
 import { toApiTrade } from "./server/storage-adapter/toApi.js";
+import type { RegimeSnapshot } from "../shared/types.js";
 
 // ===================================================================
 // Əsas giriş nöqtəsi (sənəd, bölmə 9 və 13). `npm run start` bunu işə salır.
@@ -66,6 +67,17 @@ async function main(): Promise<void> {
   const healthTracker = new HealthTracker(eventLogger, { now });
   const logger: Logger = healthTracker;
   const serverEvents = createServerEvents();
+
+  // Mərhələ 7: RegimeStrip/RegimeGrid üçün canlı snapshot — `runCycle`-ın hər simvol üçün
+  // çağırdığı `onRegimeSnapshot`-dan doldurulur. Yalnız cari prosesin ömrü daxilində
+  // izlənir (restart-da sıfırlanır) — `changedAt` YALNIZ dəyər DƏYİŞƏNDƏ yenilənir.
+  const regimeSnapshots = new Map<string, RegimeSnapshot>();
+  function onRegimeSnapshot(snapshot: { symbol: string; regime4h: "bull" | "neutral" | "bear" }): void {
+    const previous = regimeSnapshots.get(snapshot.symbol);
+    const changedAt = previous && previous.regime4h === snapshot.regime4h ? previous.changedAt : now();
+    regimeSnapshots.set(snapshot.symbol, { symbol: snapshot.symbol, regime4h: snapshot.regime4h, changedAt });
+  }
+
   const appendTrade = (record: TradeRecord) => {
     tradeWriter(JSON.stringify(record));
     emitServerEvent(serverEvents, "trade:closed", toApiTrade(record));
@@ -134,6 +146,7 @@ async function main(): Promise<void> {
     eventsFilePath: EVENTS_FILE,
     getCachedClose: (symbol) => dataLayer.getCachedClose(symbol),
     serverEvents,
+    getRegimeSnapshots: () => [...regimeSnapshots.values()],
   });
   const apiPort = Number(process.env.PORT ?? 4000);
   const httpServer = apiApp.listen(apiPort, () => {
@@ -153,6 +166,7 @@ async function main(): Promise<void> {
         logger,
         config,
         onSignal: (signal) => emitServerEvent(serverEvents, "signal:new", signal),
+        onRegimeSnapshot,
       });
     } catch (err) {
       logger.error("Dövrə icra xətası", { error: String(err) });

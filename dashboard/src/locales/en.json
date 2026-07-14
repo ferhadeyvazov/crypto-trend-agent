@@ -81,5 +81,6 @@
   "no_open_positions": "No open positions",
   "no_trades": "No closed trades yet",
   "loading": "Loading…",
-  "load_error": "Failed to load data"
+  "load_error": "Failed to load data",
+  "no_data": "No data yet"
 }

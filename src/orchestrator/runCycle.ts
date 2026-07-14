@@ -40,6 +40,19 @@ export interface OrchestratorDeps {
   getMinNotional?: (symbol: string) => number;
   /** Dashboard `signal:new` socket.io hadisəsi üçün (Mərhələ 3) — yeni giriş siqnalı TAPILANDA çağırılır. */
   onSignal?: (signal: { symbol: string; timeframe: "1H"; type: string; createdAt: number }) => void;
+  /**
+   * Dashboard RegimeStrip/RegimeGrid üçün (Mərhələ 7) — HƏR simvol üçün, data uğurla
+   * alındıqdan dərhal sonra (mövqə açıq olsun-olmasın, NO_TRADE olsun-olmasın) çağırılır.
+   * Mövcud `logger.signal(...)` çağırışları YALNIZ bəzi hallarda işə düşür (aşağı bax) —
+   * bu, universe-in HAMISI üçün "cari rejim"i əldə etməyin yeganə yoludur.
+   */
+  onRegimeSnapshot?: (snapshot: { symbol: string; regime4h: "bull" | "neutral" | "bear" }) => void;
+}
+
+function regimeToBias(regime: Regime): "bull" | "neutral" | "bear" {
+  if (regime === "LONG_ONLY") return "bull";
+  if (regime === "SHORT_ONLY") return "bear";
+  return "neutral";
 }
 
 interface SignalCandidate {
@@ -89,6 +102,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
     const atr1hSeries = computeAtrSeries(candles1h, config.indicators.atr_1h.period);
     const atr1hCurrent = atr1hSeries[atr1hSeries.length - 1]!;
     snapshots.set(symbol, { regime4h, atr1hCurrent });
+    deps.onRegimeSnapshot?.({ symbol, regime4h: regimeToBias(regime4h) });
 
     const lastCandle1h = candles1h[candles1h.length - 1]!;
     const existingPosition = executionEngine.getPosition(symbol);

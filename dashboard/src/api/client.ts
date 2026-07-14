@@ -7,6 +7,7 @@ import type {
   EquityPoint,
   SystemHealth,
   MetricsResponse,
+  RegimeSnapshot,
 } from "@shared/types.ts";
 
 // ===================================================================
@@ -41,6 +42,10 @@ export async function getMetrics(): Promise<MetricsResponse> {
 
 export async function getHealth(): Promise<SystemHealth> {
   return (await http.get<SystemHealth>("/api/health")).data;
+}
+
+export async function getRegimes(): Promise<RegimeSnapshot[]> {
+  return (await http.get<RegimeSnapshot[]>("/api/regimes")).data;
 }
 
 /** Yazma endpoint-ləri — `X-Control-Token` YALNIZ burada, birbaşa çağırışın header-ində (plan qərarı). */

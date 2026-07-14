@@ -32,6 +32,7 @@ async function startTestServer() {
     eventsFilePath: "events.jsonl",
     getCachedClose: () => null,
     serverEvents,
+    getRegimeSnapshots: () => [],
   });
 
   const httpServer = app.listen(0);

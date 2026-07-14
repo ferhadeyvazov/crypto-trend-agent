@@ -17,6 +17,7 @@ import type {
   SystemHealth as ApiSystemHealth,
   PortfolioSummary,
   MetricsResponse,
+  RegimeSnapshot,
 } from "../../../shared/types.js";
 
 const THIRTY_DAYS_MS = 30 * 24 * 3_600_000;
@@ -33,6 +34,8 @@ export interface DataServiceDeps {
   getCachedClose: (symbol: string) => number | null;
   /** `engine:state` hadisəsinin socket.io-ya yayılması üçün (Mərhələ 3) — bax src/server/serverEvents.ts. */
   serverEvents: ServerEvents;
+  /** Mərhələ 7: `main.ts`-in in-memory rejim snapshot-ları (RegimeStrip/RegimeGrid üçün). */
+  getRegimeSnapshots: () => RegimeSnapshot[];
 }
 
 /**
@@ -127,6 +130,10 @@ export class DataService {
 
   getHealth(): ApiSystemHealth {
     return toApiSystemHealth(this.deps.executionEngine, this.deps.healthTracker, this.deps.now());
+  }
+
+  getRegimes(): RegimeSnapshot[] {
+    return this.deps.getRegimeSnapshots();
   }
 
   startEngine(reason: string): ApiSystemHealth {

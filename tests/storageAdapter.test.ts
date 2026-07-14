@@ -148,6 +148,7 @@ describe("toApiSystemHealth", () => {
     let nowMs = 1000;
     const now = () => nowMs;
     const healthTracker = new HealthTracker({ log() {}, trade() {}, signal() {}, risk() {}, warn() {}, error() {} }, { now });
+    healthTracker.signal("BTCUSDT: PULLBACK siqnalı");
     healthTracker.error("test xətası");
     healthTracker.recordCycleCompleted(1000);
 
@@ -164,5 +165,9 @@ describe("toApiSystemHealth", () => {
     expect(health.lastFetchAt).toBe(1000);
     expect(health.schedulerStatus).toBe("running");
     expect(health.recentErrors).toHaveLength(1);
+    // recentEvents HAMISINI (SIGNAL + ERROR) saxlayır — recentErrors YALNIZ ERROR-u.
+    expect(health.recentEvents).toHaveLength(2);
+    expect(health.recentEvents[0]).toContain("SIGNAL");
+    expect(health.recentEvents[1]).toContain("ERROR");
   });
 });

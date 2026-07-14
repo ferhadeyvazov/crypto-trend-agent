@@ -5,11 +5,13 @@ import { Sidebar } from "./Sidebar.tsx";
 import { BottomNav } from "./BottomNav.tsx";
 import { Footer } from "./Footer.tsx";
 import { navItems, type PageId } from "./navItems.tsx";
-import { RegimeStrip } from "../components/RegimeStrip.tsx";
+import { RegimeStrip, type PositionBias } from "../components/RegimeStrip.tsx";
 import { ConnectionBadge } from "../components/ConnectionBadge.tsx";
 import { EngineToggle } from "../components/EngineToggle.tsx";
 import { PausedBanner } from "../components/PausedBanner.tsx";
 import { useSocket } from "../hooks/useSocket.ts";
+import { useRegimes } from "../hooks/useRegimes.ts";
+import { usePositions } from "../hooks/usePositions.ts";
 import { getHealth } from "../api/client.ts";
 import { queryKeys } from "../lib/queryKeys.ts";
 import { OverviewPage } from "../pages/OverviewPage.tsx";
@@ -33,10 +35,21 @@ export function AppLayout() {
   const [activePage, setActivePage] = useState<PageId>("overview");
   useSocket(); // socket.io hadisələrini query cache-ə bağlayır (bax hooks/useSocket.ts)
   const { data: health } = useQuery({ queryKey: queryKeys.health, queryFn: getHealth });
+  const { data: regimes } = useRegimes();
+  const { data: positions } = usePositions();
 
   const ActivePageComponent = pageComponents[activePage];
   const activeLabelKey = navItems.find((n) => n.id === activePage)!.labelKey;
   const paused = health?.engineState === "paused";
+
+  const positionSideBySymbol = new Map((positions ?? []).map((p) => [p.symbol, p.side]));
+  const regimeStripItems = (regimes ?? []).map((r) => {
+    const side = positionSideBySymbol.get(r.symbol);
+    // Alt göstərici = açıq mövqənin statusu (sistemdə ayrıca 1H rejim yoxdur — plan-ın
+    // RegimeStrip düzəlişi, mockup-un "1H bias"-ını override edir).
+    const positionBias: PositionBias = side === "long" ? "long" : side === "short" ? "short" : "flat";
+    return { symbol: r.symbol, regime4h: r.regime4h, positionBias };
+  });
 
   return (
     <div className="grid min-h-screen mobile:grid-cols-[216px_1fr]">
@@ -68,7 +81,7 @@ export function AppLayout() {
 
         {paused && <PausedBanner />}
 
-        <RegimeStrip regimes={[]} />
+        <RegimeStrip regimes={regimeStripItems} />
 
         <main className="grid flex-1 gap-4 p-6 max-mobile:gap-3 max-mobile:p-4 max-mobile:pb-[88px]">
           <ActivePageComponent />

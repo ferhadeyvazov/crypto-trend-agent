@@ -82,6 +82,19 @@ export interface SystemHealth {
   lastFetchAt: number;
   recentErrors: string[];
   stateLog: EngineStateLog[];
+  /** Mərhələ 7: bütün səviyyələr (TRADE/SIGNAL/RISK/WARN/ERROR) — HealthPage-in "Recent log" bölməsi. */
+  recentEvents: string[];
+}
+
+/**
+ * Mərhələ 7: RegimeStrip/RegimeGrid üçün — `runCycle`-ın hər simvol üçün hesabladığı
+ * 4H rejimin canlı snapshot-u (`main.ts`-də in-memory Map-də saxlanılır, restart-da
+ * sıfırlanır). `changedAt` YALNIZ cari prosesin ömrü daxilində izlənən dəyişiklik vaxtıdır.
+ */
+export interface RegimeSnapshot {
+  symbol: string;
+  regime4h: "bull" | "neutral" | "bear";
+  changedAt: number;
 }
 
 /** Mənbə: src/reporting/types.ts PerformanceMetrics (eyni sahələr) — GET /api/metrics cavabının bir hissəsi. */

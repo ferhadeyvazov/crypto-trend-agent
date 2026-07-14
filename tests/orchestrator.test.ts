@@ -178,6 +178,44 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     expect(riskLog?.data?.reasons).toContain("BTC_REGIME_GUARD_ADX");
   });
 
+  it("onRegimeSnapshot NO_TRADE simvollar üçün DƏ çağırılır (dashboard RegimeStrip/Grid, Mərhələ 7)", async () => {
+    const data = new Map<string, Candle[]>([
+      ["BTCUSDT|4h", buildChoppy4h()], // NO_TRADE — mövcud loglama bunu heç göstərmir
+      ["BTCUSDT|1h", buildFlatNoSignal1h()],
+      ["SOLUSDT|4h", buildStrongTrend4h()], // LONG_ONLY
+      ["SOLUSDT|1h", buildFlatNoSignal1h()],
+    ]);
+
+    const { engine } = mkEngine();
+    const logger = new FakeLogger();
+    const snapshots: { symbol: string; regime4h: "bull" | "neutral" | "bear" }[] = [];
+    await runCycle(["BTCUSDT", "SOLUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      onRegimeSnapshot: (s) => snapshots.push(s),
+    });
+
+    expect(snapshots).toContainEqual({ symbol: "BTCUSDT", regime4h: "neutral" });
+    expect(snapshots).toContainEqual({ symbol: "SOLUSDT", regime4h: "bull" });
+  });
+
+  it("onRegimeSnapshot artıq açıq mövqəsi olan simvol üçün DƏ çağırılır", async () => {
+    const data = baseDataMap();
+    data.set("SOLUSDT|4h", buildStrongTrend4h());
+    data.set("SOLUSDT|1h", buildFlatNoSignal1h());
+
+    const { engine } = mkEngine();
+    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+
+    const logger = new FakeLogger();
+    const snapshots: { symbol: string; regime4h: "bull" | "neutral" | "bear" }[] = [];
+    await runCycle(["BTCUSDT", "SOLUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      onRegimeSnapshot: (s) => snapshots.push(s),
+    });
+
+    expect(snapshots).toContainEqual({ symbol: "SOLUSDT", regime4h: "bull" });
+  });
+
   it("portfel limiti dolu olanda daha yüksək ADX-li namizəd prioritet alır", async () => {
     const data = baseDataMap();
     data.set("SOLUSDT|4h", buildModerateTrend4h()); // aşağı ADX (~25.8)

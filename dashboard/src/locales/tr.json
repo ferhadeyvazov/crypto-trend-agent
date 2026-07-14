@@ -81,5 +81,6 @@
   "no_open_positions": "Açık pozisyon yok",
   "no_trades": "Henüz kapanan işlem yok",
   "loading": "Yükleniyor…",
-  "load_error": "Veri yüklenemedi"
+  "load_error": "Veri yüklenemedi",
+  "no_data": "Henüz veri yok"
 }

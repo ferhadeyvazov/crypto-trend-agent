@@ -6,6 +6,7 @@ import { createServerEvents, emitServerEvent } from "../src/server/serverEvents.
 import { createApiApp } from "../src/server/api/app.js";
 import { createSocketServer } from "../src/server/ws/index.js";
 import { toApiTrade } from "../src/server/storage-adapter/toApi.js";
+import type { RegimeSnapshot } from "../shared/types.js";
 
 // ===================================================================
 // Dashboard frontend inkişafı üçün FIXTURE server (Mərhələ 4-5). Real
@@ -80,6 +81,19 @@ async function main(): Promise<void> {
     { now },
   );
   healthTracker.recordCycleCompleted(now());
+  // Recent log demo (Mərhələ 7) — HealthTracker.recentEvents HAMISINI qeyd edir.
+  healthTracker.signal("SOLUSDT: PULLBACK siqnalı (LONG)");
+  healthTracker.warn("CoinGecko 429 · Binance həcm fallback-ı istifadə olundu");
+  healthTracker.error("ADAUSDT: data alınmadı (nümunə xəta)");
+
+  // Regime snapshot demo (Mərhələ 7) — BTCUSDT açıq mövqə ilə üst-üstə düşür (RegimeStrip-in
+  // 1H bar-ı position-dan gələcək), qalanları müxtəlif rejimlər göstərir.
+  const regimeSnapshots = new Map<string, RegimeSnapshot>([
+    ["BTCUSDT", { symbol: "BTCUSDT", regime4h: "bull", changedAt: nowMs - 5 * 3_600_000 }],
+    ["ETHUSDT", { symbol: "ETHUSDT", regime4h: "bull", changedAt: nowMs - 12 * 3_600_000 }],
+    ["SOLUSDT", { symbol: "SOLUSDT", regime4h: "neutral", changedAt: nowMs - 2 * 3_600_000 }],
+    ["ADAUSDT", { symbol: "ADAUSDT", regime4h: "bear", changedAt: nowMs - 40 * 3_600_000 }],
+  ]);
 
   const { app, dataService } = createApiApp({
     executionEngine,
@@ -91,6 +105,7 @@ async function main(): Promise<void> {
     eventsFilePath: "events.jsonl",
     getCachedClose: (symbol) => (symbol === "BTCUSDT" ? 67450 : null),
     serverEvents,
+    getRegimeSnapshots: () => [...regimeSnapshots.values()],
   });
 
   const port = Number(process.env.PORT ?? 4000);
@@ -98,6 +113,15 @@ async function main(): Promise<void> {
     console.log(`Fixture dashboard API: http://localhost:${port} (CONTROL_TOKEN=${process.env.CONTROL_TOKEN})`);
   });
   createSocketServer(httpServer, dataService, serverEvents);
+
+  // Canlı siqnal demo-su (Mərhələ 7 yoxlaması: "siqnal real vaxtda") — 15 saniyə sonra
+  // yeni bir siqnal event.jsonl-ə əlavə olunur və `signal:new` emit edilir.
+  setTimeout(() => {
+    const liveSignal = { symbol: "ETHUSDT", timeframe: "1H" as const, type: "BREAKOUT", createdAt: now() };
+    files["events.jsonl"] += `\n${JSON.stringify({ ts: liveSignal.createdAt, level: "SIGNAL", message: "ETHUSDT: BREAKOUT siqnalı (LONG)", data: { symbol: "ETHUSDT", timeframe: "1H", type: "BREAKOUT", direction: "LONG", regime: "LONG_ONLY", adx4h: 33 } })}`;
+    emitServerEvent(serverEvents, "signal:new", liveSignal);
+    console.log("Fixture: yeni siqnal emit olundu (ETHUSDT BREAKOUT) — SignalFeed pulse demo-su.");
+  }, 15_000);
 
   setTimeout(() => {
     const pos = executionEngine.getPosition("BTCUSDT");

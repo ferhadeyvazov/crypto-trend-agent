@@ -6,6 +6,7 @@ import { HealthTracker } from "../src/health/HealthTracker.js";
 import { createServerEvents } from "../src/server/serverEvents.js";
 import { config } from "../src/config/index.js";
 import type { TradeRecord } from "../src/execution/types.js";
+import type { RegimeSnapshot } from "../shared/types.js";
 
 // ===================================================================
 // Express API inteqrasiya testləri (Mərhələ 2). Real `express` app-i
@@ -19,7 +20,7 @@ function mkCandle(i: number, open: number, high: number, low: number, close: num
   return { openTime: i * 3_600_000, open, high, low, close, volume: 0, closeTime: (i + 1) * 3_600_000 - 1 };
 }
 
-async function startTestServer(files: Record<string, string> = {}) {
+async function startTestServer(files: Record<string, string> = {}, regimeSnapshots: RegimeSnapshot[] = []) {
   let nowMs = 10_000;
   const now = () => nowMs;
   const trades: TradeRecord[] = [];
@@ -36,6 +37,7 @@ async function startTestServer(files: Record<string, string> = {}) {
     eventsFilePath: "events.jsonl",
     getCachedClose: () => 105,
     serverEvents: createServerEvents(),
+    getRegimeSnapshots: () => regimeSnapshots,
   });
 
   const server = app.listen(0);
@@ -133,6 +135,18 @@ describe("Dashboard REST API", () => {
     expect(body.data.engineState).toBe("running");
     expect(body.data.schedulerStatus).toBe("running");
     expect(body.data.stateLog).toEqual([]);
+  });
+
+  it("GET /api/regimes — main.ts-in in-memory rejim snapshot-larını olduğu kimi qaytarır", async () => {
+    const seedRegimes: RegimeSnapshot[] = [
+      { symbol: "BTCUSDT", regime4h: "bull", changedAt: 5000 },
+      { symbol: "ETHUSDT", regime4h: "neutral", changedAt: 8000 },
+    ];
+    ctx = await startTestServer({}, seedRegimes);
+    const res = await fetch(`${ctx.baseUrl}/api/regimes`);
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.data).toEqual(seedRegimes);
   });
 
   it("POST /api/engine/stop — token yoxdursa 401, doğru token ilə pauzalayır və queueEntry-ni bloklayır", async () => {

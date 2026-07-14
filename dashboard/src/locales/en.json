@@ -75,6 +75,7 @@
   "cancel": "Cancel",
   "confirm": "Confirm",
   "paused_banner": "Trading paused — new entries blocked, open positions still managed.",
+  "disconnected_banner": "Connection lost — reconnecting… data shown may be stale.",
   "copyright": "© 2026 Traiderim. All rights reserved.",
   "footer_note": "Paper trading only — not financial advice.",
   "footer_docs": "Strategy spec",

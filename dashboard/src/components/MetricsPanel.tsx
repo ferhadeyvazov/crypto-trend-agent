@@ -7,7 +7,7 @@ import { formatPct, formatDateShort, pnlTone } from "../lib/format.ts";
 
 export function MetricsPanel() {
   const { t } = useTranslation();
-  const { data } = useMetrics();
+  const { data, isLoading, isError } = useMetrics();
   const { data: curve } = useEquityCurve();
 
   const metrics = data?.metrics;
@@ -17,29 +17,33 @@ export function MetricsPanel() {
   const hasDrawdown = drawdown !== null && drawdown.ddPct > 0.01;
 
   return (
-    <div className="grid grid-cols-2 gap-4 tablet:grid-cols-4">
-      <StatCard
-        label={t("win_rate")}
-        value={metrics ? formatPct(metrics.winRate * 100) : "—"}
-        delta={metrics ? `${wins} W / ${losses} L` : undefined}
-      />
-      <StatCard
-        label={t("profit_factor")}
-        value={metrics ? (Number.isFinite(metrics.profitFactor) ? metrics.profitFactor.toFixed(2) : "∞") : "—"}
-        delta={t("pf_desc")}
-      />
-      <StatCard
-        label={t("max_dd")}
-        value={metrics ? `−${metrics.maxDrawdownPct.toFixed(1)}%` : "—"}
-        valueTone={metrics && metrics.maxDrawdownPct > 0.01 ? "down" : undefined}
-        delta={hasDrawdown ? `${formatDateShort(drawdown!.peakTs)} – ${formatDateShort(drawdown!.troughTs)}` : undefined}
-      />
-      <StatCard
-        label={t("avg_r")}
-        value={metrics ? `${metrics.avgRMultiple >= 0 ? "+" : ""}${metrics.avgRMultiple.toFixed(2)}R` : "—"}
-        valueTone={metrics ? pnlTone(metrics.avgRMultiple) : undefined}
-        delta={t("per_trade")}
-      />
+    <div>
+      {isLoading && <p className="mb-3 text-sm text-muted">{t("loading")}</p>}
+      {isError && <p className="mb-3 text-sm text-red">{t("load_error")}</p>}
+      <div className="grid grid-cols-2 gap-4 tablet:grid-cols-4">
+        <StatCard
+          label={t("win_rate")}
+          value={metrics ? formatPct(metrics.winRate * 100) : "—"}
+          delta={metrics ? `${wins} W / ${losses} L` : undefined}
+        />
+        <StatCard
+          label={t("profit_factor")}
+          value={metrics ? (Number.isFinite(metrics.profitFactor) ? metrics.profitFactor.toFixed(2) : "∞") : "—"}
+          delta={t("pf_desc")}
+        />
+        <StatCard
+          label={t("max_dd")}
+          value={metrics ? `−${metrics.maxDrawdownPct.toFixed(1)}%` : "—"}
+          valueTone={metrics && metrics.maxDrawdownPct > 0.01 ? "down" : undefined}
+          delta={hasDrawdown ? `${formatDateShort(drawdown!.peakTs)} – ${formatDateShort(drawdown!.troughTs)}` : undefined}
+        />
+        <StatCard
+          label={t("avg_r")}
+          value={metrics ? `${metrics.avgRMultiple >= 0 ? "+" : ""}${metrics.avgRMultiple.toFixed(2)}R` : "—"}
+          valueTone={metrics ? pnlTone(metrics.avgRMultiple) : undefined}
+          delta={t("per_trade")}
+        />
+      </div>
     </div>
   );
 }

@@ -75,6 +75,7 @@
   "cancel": "İmtina",
   "confirm": "Təsdiq",
   "paused_banner": "Ticarət pauzadadır — yeni girişlər bloklanıb, açıq mövqelər idarə olunur.",
+  "disconnected_banner": "Bağlantı kəsildi — yenidən qoşulur… göstərilən data köhnəlmiş ola bilər.",
   "copyright": "© 2026 Traiderim. Bütün hüquqlar qorunur.",
   "footer_note": "Yalnız paper trading — maliyyə məsləhəti deyil.",
   "footer_docs": "Strategiya spesifikasiyası",

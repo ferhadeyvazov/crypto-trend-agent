@@ -9,6 +9,7 @@ import { RegimeStrip, type PositionBias } from "../components/RegimeStrip.tsx";
 import { ConnectionBadge } from "../components/ConnectionBadge.tsx";
 import { EngineToggle } from "../components/EngineToggle.tsx";
 import { PausedBanner } from "../components/PausedBanner.tsx";
+import { DisconnectBanner } from "../components/DisconnectBanner.tsx";
 import { useSocket } from "../hooks/useSocket.ts";
 import { useRegimes } from "../hooks/useRegimes.ts";
 import { usePositions } from "../hooks/usePositions.ts";
@@ -33,7 +34,7 @@ const LANGUAGES = ["en", "az", "tr"] as const;
 export function AppLayout() {
   const { t, i18n } = useTranslation();
   const [activePage, setActivePage] = useState<PageId>("overview");
-  useSocket(); // socket.io hadisələrini query cache-ə bağlayır (bax hooks/useSocket.ts)
+  const { connected } = useSocket(); // socket.io hadisələrini query cache-ə bağlayır (bax hooks/useSocket.ts)
   const { data: health } = useQuery({ queryKey: queryKeys.health, queryFn: getHealth });
   const { data: regimes } = useRegimes();
   const { data: positions } = usePositions();
@@ -79,6 +80,7 @@ export function AppLayout() {
           </div>
         </header>
 
+        {!connected && <DisconnectBanner />}
         {paused && <PausedBanner />}
 
         <RegimeStrip regimes={regimeStripItems} />

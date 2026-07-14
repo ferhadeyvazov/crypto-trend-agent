@@ -7,13 +7,15 @@ import { formatUsd, formatPct, pnlTone } from "../lib/format.ts";
 
 export function OverviewPage() {
   const { t } = useTranslation();
-  const { data: portfolio } = usePortfolio();
+  const { data: portfolio, isLoading, isError } = usePortfolio();
   const { data: positions } = usePositions();
 
   const unrealizedTotal = (positions ?? []).reduce((sum, p) => sum + p.unrealizedPnl, 0);
 
   return (
     <>
+      {isLoading && <p className="text-sm text-muted">{t("loading")}</p>}
+      {isError && <p className="text-sm text-red">{t("load_error")}</p>}
       <div className="grid grid-cols-2 gap-4 tablet:grid-cols-4">
         <StatCard
           label={t("equity")}

@@ -60,7 +60,7 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
 | 5 | ExecutionEngine (paper): fill simulyasiyası (§10.3), fee+slippage modeli (§10.2), trade journal (§10.4), state machine (§9, o cümlədən Mərhələ 4-dən qalan zərər-limiti vaxt bərpası) | ✅ kod + 20 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ |
 | 6 | Reporting: metrikalar (§11), equity əyrisi, ən yaxşı/pis trade-lər, go-live kriteriya yoxlaması | ✅ kod + 19 test yaşıl, istifadəçi tərəfindən TƏSDİQLƏNDİ. Rədd-siqnal statistikası və universe-dəyişiklikləri (bölmə 13 hesabatının hissələri) XARİC — data mənbəyi (rədd-log yığımı) hesabat modulunda hələ birləşdirilməyib |
 | 7 | Orchestration: main.ts icra dövrəsi (§9), Universe seçimi (§2: CoinGecko + Binance fallback), state persistence/restart bərpası (§13), loglama TRADE/SIGNAL/RISK/ERROR (§13), `npm run start` | ✅ kod + 26 test yaşıl (universe/logging/state/orchestrator); real şəbəkə ilə (`npm run start`) sınaqdan keçirilib — universe seçildi, dövrə xətasız icra olundu; istifadəçi təsdiqini gözləyir |
-| — | 60 gün + min 100 trade paper trading; nəticələrin analizi | ⬜ |
+| — | 60 gün + min 100 trade paper trading; nəticələrin analizi | 🟡 BAŞLADI: 2026-07-15, pm2 (`ecosystem.config.cjs`) ilə arxa planda işə salındı. Başlanğıc state: equity $10133.10, 4 trade (əvvəlki dövrdən davam edir, sayğaca daxildir) |
 
 ## İş üslubu
 
@@ -84,8 +84,8 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
   ("Stage N: <ad>" formatında). main-ə merge yalnız Stage 8-dən sonra.
 - v1 backend kodunun davranışına toxunma — yalnız plandakı əlavələr
   (server/, shared/, dashboard/) və emit nöqtələrinin qoşulması.
-- **Stage 9 (Telegram Bridge, `src/server/telegram/`):** ✅ kod + testlər hazır,
-  `v2` branch-də commit/push olunub. Bot tokeni/`ALLOWED_CHAT_IDS` YALNIZ
-  `.env`-dədir (koda YAZILMIR). Canlı Telegram testi (mesaj gəlməsi, `/stop`
-  dashboard-da pauza kimi görünməsi) istifadəçinin öz bot tokeni ilə ediləcək —
-  bu təsdiqdən SONRA `v2` → `main` merge olunacaq.
+- **Stage 9 (Telegram Bridge, `src/server/telegram/`):** ✅ kod + testlər hazır.
+  Bot tokeni/`ALLOWED_CHAT_IDS` YALNIZ `.env`-dədir (koda YAZILMIR). Canlı
+  Telegram testi (mesaj gəlməsi, `/stop` dashboard-da pauza kimi görünməsi)
+  istifadəçi tərəfindən öz bot tokeni ilə edilib və TƏSDİQLƏNİB. `v2` → `main`
+  merge tamamlanıb (`main` = `v2` = `202d6c4`).

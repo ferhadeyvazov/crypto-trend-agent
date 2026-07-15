@@ -16,9 +16,9 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
     >
       <div className="flex items-center gap-2.5 px-2.5 pb-[18px] pt-1">
         <div className="grid h-7 w-7 place-items-center rounded-[7px] bg-amber font-mono text-[15px] font-semibold text-bg">
-          T
+          F
         </div>
-        <div className="font-semibold tracking-[.2px]">Traiderim</div>
+        <div className="font-semibold tracking-[.2px]">Fedya_Traider</div>
         <div className="ml-auto font-mono text-[11px] text-muted">v2</div>
       </div>
 

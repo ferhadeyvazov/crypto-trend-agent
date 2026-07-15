@@ -20,7 +20,7 @@ const positionLabel: Record<PositionBias, string> = { long: "LONG", short: "SHOR
 
 /**
  * "Position" sütunu (əvvəllər "1H bias") — sistemdə ayrıca 1H rejim YOXDUR, ona görə
- * açıq mövqənin İSTİQAMƏTİ göstərilir (TRAIDERIM_V2_PLAN.md-in RegimeStrip düzəlişi,
+ * açıq mövqənin İSTİQAMƏTİ göstərilir (FEDYA_TRAIDER_V2_PLAN.md-in RegimeStrip düzəlişi,
  * mockup-un uydurma "1H bias"-ını override edir).
  */
 function positionBias(side: "long" | "short" | undefined): PositionBias {

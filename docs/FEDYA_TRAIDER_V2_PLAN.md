@@ -1,7 +1,7 @@
-# Traiderim v2 (Dashboard) — Development Plan
+# Fedya_Traider v2 (Dashboard) — Development Plan
 
 > Status: FINAL — bütün qərarlar istifadəçi ilə razılaşdırılıb.
-> Dizayn mockup-u təsdiqlənib: `traiderim-dashboard-mockup.html` (tokenlər Stage 4-də Tailwind theme-ə köçürülür).
+> Dizayn mockup-u təsdiqlənib: `fedya-traider-dashboard-mockup.html` (tokenlər Stage 4-də Tailwind theme-ə köçürülür).
 > İş qaydası: hər mərhələdən sonra STOP → nəticə göstərilir → istifadəçi təsdiqi → növbəti mərhələ.
 
 ## Qətiləşmiş qərarlar (xülasə)
@@ -66,7 +66,7 @@
 ## 4. Folder structure
 
 ```
-traiderim/
+fedya-traider/
 ├── src/                        # v1 backend (dəyişmir)
 │   ├── data/  indicators/  signals/  risk/  execution/  reporting/
 │   └── server/                 # YENİ

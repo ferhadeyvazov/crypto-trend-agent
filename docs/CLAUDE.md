@@ -73,9 +73,9 @@ dilində cavab ver; kod identifikatorları və şərhlərdəki texniki adlar ing
   ölçməkdir. Bu çərçivəni qoru.
 
 ## v2 Dashboard işi (aktiv)
-- Plan: docs/TRAIDERIM_V2_PLAN.md — Build plan cədvəlinə DƏQİQ əməl et.
+- Plan: docs/FEDYA_TRAIDER_V2_PLAN.md — Build plan cədvəlinə DƏQİQ əməl et.
   Plandakı "Qətiləşmiş qərarlar" bölməsi mübahisəsiz qaydalardır.
-- Dizayn: docs/design/traiderim-dashboard-mockup.html — rənglər, layout,
+- Dizayn: docs/design/fedya-traider-dashboard-mockup.html — rənglər, layout,
   komponentlər və i18n mətnləri buradan götürülür, yenidən icad edilmir.
 - İş qaydası: BİR mərhələ = BİR iş vahidi. Mərhələ bitəndə DAYAN,
   nə etdiyini xülasə et, yoxlama addımlarını göstər, təsdiqimi gözlə.

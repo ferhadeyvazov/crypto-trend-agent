@@ -1,5 +1,5 @@
 export type RegimeBias = "bull" | "neutral" | "bear";
-/** Açıq mövqə statusu — sistemdə ayrıca "1H rejim" YOXDUR (TRAIDERIM_V2_PLAN.md-in RegimeStrip düzəlişi, mockup-un "1H bias"-ını override edir). */
+/** Açıq mövqə statusu — sistemdə ayrıca "1H rejim" YOXDUR (FEDYA_TRAIDER_V2_PLAN.md-in RegimeStrip düzəlişi, mockup-un "1H bias"-ını override edir). */
 export type PositionBias = "long" | "short" | "flat";
 
 export interface RegimeStripItem {

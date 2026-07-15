@@ -1,5 +1,5 @@
 // ===================================================================
-// Dashboard API kontraktı (TRAIDERIM_V2_PLAN.md, bölmə 5). Bu tiplər
+// Dashboard API kontraktı (FEDYA_TRAIDER_V2_PLAN.md, bölmə 5). Bu tiplər
 // backend-in daxili mühərrik tipləri (src/execution, src/signals,
 // src/reporting) İLƏ EYNİ DEYİL — storage-adapter (Mərhələ 2) daxili
 // state-i bu formaya çevirir. Backend daxili tipləri bu fayldan
@@ -8,7 +8,7 @@
 
 export type PositionSide = "long" | "short";
 
-/** GET /api/portfolio cavabı (plan bölmə 1 MVP scope — TRAIDERIM_V2_PLAN.md bölmə 5-də ayrıca cədvəl sətri yoxdur, Mərhələ 2-də formalaşdırılıb). */
+/** GET /api/portfolio cavabı (plan bölmə 1 MVP scope — FEDYA_TRAIDER_V2_PLAN.md bölmə 5-də ayrıca cədvəl sətri yoxdur, Mərhələ 2-də formalaşdırılıb). */
 export interface PortfolioSummary {
   equity: number;
   dailyPnlPct: number;

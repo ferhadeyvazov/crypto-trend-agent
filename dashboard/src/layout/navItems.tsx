@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 // ===================================================================
 // Naviqasiya siyahısı (Sidebar + BottomNav eyni siyahını istifadə edir)
-// və mockup-dakı eyni SVG ikonlar (docs/design/traiderim-dashboard-mockup.html).
+// və mockup-dakı eyni SVG ikonlar (docs/design/fedya-traider-dashboard-mockup.html).
 // ===================================================================
 
 export type PageId = "overview" | "trades" | "signals" | "performance" | "health";

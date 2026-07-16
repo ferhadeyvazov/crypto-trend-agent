@@ -10,6 +10,7 @@ import {
 } from "../src/reporting/metrics.js";
 import {
   buildEquityCurve,
+  buildIsolatedEquityCurve,
   buildDailyEquitySeries,
   computeDailyReturns,
   computeSharpe,
@@ -32,6 +33,7 @@ function mkTrade(overrides: Partial<TradeRecord>): TradeRecord {
     size: 1, exitTime: 3_600_000, exitPrice: 105, exitReason: "X1_INITIAL_STOP",
     grossPnl: 5, fees: 0.1, slippage: 0.05, netPnl: 4.9, rMultiple: 0.49,
     equityAfter: 10004.9, regime4h: "LONG_ONLY", adx4h: 25, atr1h: 4,
+    tier: "TIER1",
     ...overrides,
   };
 }
@@ -127,6 +129,17 @@ describe("equityCurve", () => {
     const returns = computeDailyReturns([10000, 10100, 10050, 10050, 10300]);
     expect(computeSharpe(returns)).toBeCloseTo(12.542691360293047, 6);
   });
+
+  it("buildIsolatedEquityCurve — equityAfter-i YOX, verilən trade-lərin öz netPnl-lərinin cəmini istifadə edir", () => {
+    // equityAfter (bütün portfelin ortaq equity-si) qəsdən netPnl-lə uyğunsuz qoyulub —
+    // bununla buildEquityCurve-dən fərqli nəticə verdiyini sübut edirik.
+    const trades = [
+      mkTrade({ exitTime: START + DAY, netPnl: 500, equityAfter: 99999 }),
+      mkTrade({ exitTime: START + 2 * DAY, netPnl: -200, equityAfter: 11111 }),
+    ];
+    const curve = buildIsolatedEquityCurve(trades, 10000, START);
+    expect(curve.map((p) => p.equity)).toEqual([10000, 10500, 10300]);
+  });
 });
 
 describe("evaluateGoLiveCriteria", () => {
@@ -197,5 +210,26 @@ describe("buildPerformanceReport — tam inteqrasiya", () => {
     expect(report.bestTrades[0]!.id).toBe("a");
     expect(report.worstTrades[0]!.id).toBe("b");
     expect(report.equityCurve[0]).toEqual({ time: START, equity: config.paperTrading.initialEquityUsd });
+  });
+
+  it("tierBreakdown — TIER2-nin böyük itkisi TIER1-in öz equity əyrisinə/drawdown-una sızmır", () => {
+    // equityAfter portfelin ORTAQ (hər iki tier-in birgə) equity-sidir — TIER1 özü
+    // yalnız qazanır (heç bir itki yoxdur), amma araya girən böyük TIER2 itkisi
+    // equityAfter-i 10500-dən 8000-ə endirir. Köhnə (bug-lı) davranış bunu TIER1-in
+    // öz drawdown-u kimi göstərərdi; düzəlişdən sonra tierBreakdown.tier1 YALNIZ
+    // TIER1-in öz netPnl-lərini görməlidir.
+    const trades = [
+      mkTrade({ id: "t1a", tier: "TIER1", netPnl: 500, exitTime: START + DAY, equityAfter: 10500 }),
+      mkTrade({ id: "t2a", tier: "TIER2", netPnl: -3000, exitTime: START + 2 * DAY, equityAfter: 7500 }),
+      mkTrade({ id: "t1b", tier: "TIER1", netPnl: 500, exitTime: START + 3 * DAY, equityAfter: 8000 }),
+    ];
+    const report = buildPerformanceReport(trades, config, { startTime: START, criticalErrorCount30d: 0 });
+
+    expect(report.tierBreakdown.tier1.netPnl).toBeCloseTo(1000, 10);
+    expect(report.tierBreakdown.tier1.maxDrawdownPct).toBe(0); // TIER1 özü heç vaxt düşməyib
+    expect(report.tierBreakdown.tier2.netPnl).toBeCloseTo(-3000, 10);
+    expect(report.tierBreakdown.tier2.tradeCount).toBe(1);
+    // Ümumi (qarışıq) metrikalar dəyişməz qalır — bütün portfelin real drawdown-unu göstərir
+    expect(report.metrics.maxDrawdownPct).toBeGreaterThan(0);
   });
 });

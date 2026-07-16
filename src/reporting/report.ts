@@ -1,6 +1,6 @@
 import type { StrategyConfig } from "../config/index.js";
 import type { TradeRecord } from "../execution/types.js";
-import { buildEquityCurve } from "./equityCurve.js";
+import { buildEquityCurve, buildIsolatedEquityCurve } from "./equityCurve.js";
 import { computePerformanceMetrics } from "./metrics.js";
 import { evaluateGoLiveCriteria } from "./goLive.js";
 import type { EquityPoint, GoLiveEvaluation, PerformanceMetrics } from "./types.js";
@@ -48,12 +48,14 @@ export function buildPerformanceReport(
       config.paperTrading.initialEquityUsd,
       context.startTime,
       context.criticalErrorCount30d,
+      buildIsolatedEquityCurve,
     ),
     tier2: computePerformanceMetrics(
       trades.filter((t) => t.tier === "TIER2"),
       config.paperTrading.initialEquityUsd,
       context.startTime,
       context.criticalErrorCount30d,
+      buildIsolatedEquityCurve,
     ),
   };
 

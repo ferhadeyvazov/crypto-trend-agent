@@ -1,6 +1,7 @@
 export type { EquityPoint, PerformanceMetrics, GoLiveEvaluation } from "./types.js";
 export {
   buildEquityCurve,
+  buildIsolatedEquityCurve,
   computeMaxDrawdownPct,
   buildDailyEquitySeries,
   computeDailyReturns,

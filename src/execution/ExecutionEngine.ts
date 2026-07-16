@@ -169,7 +169,10 @@ export class ExecutionEngine {
   /** §13 restart bərpası: verilmiş snapshot-dan yeni ExecutionEngine yaradır. */
   static restore(config: StrategyConfig, deps: ExecutionEngineDeps, snapshot: ExecutionEngineSnapshot): ExecutionEngine {
     const engine = new ExecutionEngine(config, deps);
-    engine.positions = new Map(snapshot.positions.map((p) => [p.symbol, p]));
+    // Tier2 dəyişikliyindən əvvəlki snapshot-larda `tier` sahəsi yoxdur — entriesPaused/
+    // engineStateLog-dakı kimi köhnə pozisiyalar TIER1 sayılır (Tier2-dən əvvəl yalnız
+    // TIER1 universe mövcud idi, ona görə bu, düzgün defoltdur, sadəcə "naməlum" deyil).
+    engine.positions = new Map(snapshot.positions.map((p) => [p.symbol, { ...p, tier: p.tier ?? "TIER1" }]));
     engine.equity = snapshot.equity;
     engine.systemStateInfo = snapshot.systemStateInfo;
     engine.consecutiveLosses = snapshot.consecutiveLosses;

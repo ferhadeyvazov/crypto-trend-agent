@@ -108,4 +108,16 @@ describe("ExecutionEngine.exportState / restore — round-trip", () => {
     expect(restored.isEntriesPaused()).toBe(false);
     expect(restored.getEngineStateLog()).toEqual([]);
   });
+
+  it("köhnə (tier sahəsi olmayan, Tier2-dən əvvəlki) açıq pozisiya TIER1 kimi bərpa olunur", () => {
+    const deps = { now: () => 1, appendTrade: () => {} };
+    const engine = new ExecutionEngine(config, deps);
+    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
+
+    const snapshot = engine.exportState() as unknown as { positions: Record<string, unknown>[] };
+    delete snapshot.positions[0]!["tier"]; // Tier2-dən əvvəlki state.json-u simulyasiya edir
+
+    const restored = ExecutionEngine.restore(config, deps, snapshot as unknown as ReturnType<typeof engine.exportState>);
+    expect(restored.getPosition("BTCUSDT")!.tier).toBe("TIER1");
+  });
 });

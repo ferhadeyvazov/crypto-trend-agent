@@ -1,6 +1,6 @@
 import type { TradeRecord } from "../execution/types.js";
 import { buildEquityCurve, buildDailyEquitySeries, computeDailyReturns, computeMaxDrawdownPct, computeSharpe } from "./equityCurve.js";
-import type { PerformanceMetrics } from "./types.js";
+import type { EquityPoint, PerformanceMetrics } from "./types.js";
 
 // ===================================================================
 // Performans metrikaları (sənəd, bölmə 11). Hamısı trade jurnalından
@@ -41,8 +41,10 @@ export function computePerformanceMetrics(
   initialEquity: number,
   startTime: number,
   criticalErrorCount30d: number,
+  /** Tier-ə görə filtrlənmiş alt-çoxluqlar `buildIsolatedEquityCurve` verməlidir — bax onun doc-u. */
+  buildCurve: (trades: TradeRecord[], initialEquity: number, startTime: number) => EquityPoint[] = buildEquityCurve,
 ): PerformanceMetrics {
-  const curve = buildEquityCurve(trades, initialEquity, startTime);
+  const curve = buildCurve(trades, initialEquity, startTime);
   const dailyReturns = computeDailyReturns(buildDailyEquitySeries(curve));
 
   return {

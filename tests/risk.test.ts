@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { config } from "../src/config/index.js";
-import { computePositionSize } from "../src/risk/sizing.js";
+import { computePositionSize, resolveTierRisk } from "../src/risk/sizing.js";
 import { checkPortfolioLimits, isAdxSufficientForCandidate } from "../src/risk/portfolioLimits.js";
 import { checkLossLimits } from "../src/risk/lossLimits.js";
 import { evaluateRisk } from "../src/risk/engine.js";
@@ -15,6 +15,19 @@ import type { OpenPositionInfo, PortfolioCandidate } from "../src/risk/types.js"
 // config.risk.riskPerTrade=0.0075, maxNotionalPctPerPosition=20,
 // config.portfolio: maxOpenPositions=6, maxTotalOpenRiskPct=3.5, maxSameDirectionAltcoins=4
 // config.indicators.adx_4h: minLong=23, minAltWhenBtcWeak=28
+
+describe("resolveTierRisk", () => {
+  it("TIER1 üçün config.risk-in özünü, TIER2 üçün config.risk.tier2-ni qaytarır", () => {
+    expect(resolveTierRisk("TIER1", config)).toEqual({
+      riskPerTrade: config.risk.riskPerTrade,
+      maxNotionalPctPerPosition: config.risk.maxNotionalPctPerPosition,
+    });
+    expect(resolveTierRisk("TIER2", config)).toEqual({
+      riskPerTrade: config.risk.tier2.riskPerTrade,
+      maxNotionalPctPerPosition: config.risk.tier2.maxNotionalPctPerPosition,
+    });
+  });
+});
 
 describe("computePositionSize", () => {
   it("əl ilə hesablanan hal: cap-siz (equity=10000, entry=100, stop=90)", () => {

@@ -3,4 +3,4 @@ export { STABLECOIN_SYMBOLS, WRAPPED_TOKEN_SYMBOLS, isExcludedAsset, CORE_ASSET_
 export { CoinGeckoMarketCapSource, type CoinGeckoSourceOptions } from "./coinGeckoSource.js";
 export { BinanceVolumeSource, type BinanceVolumeSourceOptions } from "./binanceVolumeSource.js";
 export { BinancePairChecker, type BinancePairCheckerOptions } from "./binancePairs.js";
-export { UniverseSelector, type UniverseSelectorOptions } from "./universeSelector.js";
+export { UniverseSelector, type UniverseSelectorOptions, type UniverseSelectionResult } from "./universeSelector.js";

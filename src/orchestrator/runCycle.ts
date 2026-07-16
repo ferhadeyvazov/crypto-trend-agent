@@ -74,7 +74,12 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
   const getSpreadBps = deps.getSpreadBps ?? (() => 0);
   const getMinNotional = deps.getMinNotional ?? (() => DEFAULT_MIN_NOTIONAL);
 
-  const symbols = universe.includes(BTC_SYMBOL) ? universe : [BTC_SYMBOL, ...universe];
+  // Açıq pozisiyası olan simvol universe-dən (həftəlik rebalance-də) düşsə belə
+  // dövrəyə daxil edilir — əks halda bir daha onBarClose almaz və stop/TP1/
+  // trailing/regime-flip/time-stop heç vaxt işə düşməyib pozisiya əbədi açıq qalar
+  // (bax: PR review, pre-existing #3 — Tier2-nin rank churn-u bunu daha real edib).
+  const openPositionSymbols = executionEngine.getAllPositions().map((p) => p.symbol);
+  const symbols = [...new Set([BTC_SYMBOL, ...universe, ...openPositionSymbols])];
   const minHistory = config.timeframes.minHistoryBars;
 
   const snapshots = new Map<string, AssetSnapshot>();

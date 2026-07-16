@@ -22,6 +22,17 @@ export function topTrades(trades: TradeRecord[], count: number, best: boolean): 
   return sorted.slice(0, count);
 }
 
+/** TIER1/TIER2-yə görə tək keçidlə bölür — `tier` sahəsi olmayan (pre-Tier2) trade-lər heç birinə düşmür. */
+function partitionByTier(trades: TradeRecord[]): { tier1: TradeRecord[]; tier2: TradeRecord[] } {
+  const tier1: TradeRecord[] = [];
+  const tier2: TradeRecord[] = [];
+  for (const t of trades) {
+    if (t.tier === "TIER1") tier1.push(t);
+    else if (t.tier === "TIER2") tier2.push(t);
+  }
+  return { tier1, tier2 };
+}
+
 /**
  * Bölmə 11/13-ün "hesabat" tələbinin hesablana bilən hissəsi: metrikalar,
  * go-live yoxlaması, equity əyrisi, ən yaxşı/pis 5 trade. Rədd-siqnal
@@ -42,16 +53,17 @@ export function buildPerformanceReport(
   const goLive = evaluateGoLiveCriteria(metrics, config);
   const equityCurve = buildEquityCurve(trades, config.paperTrading.initialEquityUsd, context.startTime);
 
+  const tierTrades = partitionByTier(trades);
   const tierBreakdown = {
     tier1: computePerformanceMetrics(
-      trades.filter((t) => t.tier === "TIER1"),
+      tierTrades.tier1,
       config.paperTrading.initialEquityUsd,
       context.startTime,
       context.criticalErrorCount30d,
       buildIsolatedEquityCurve,
     ),
     tier2: computePerformanceMetrics(
-      trades.filter((t) => t.tier === "TIER2"),
+      tierTrades.tier2,
       config.paperTrading.initialEquityUsd,
       context.startTime,
       context.criticalErrorCount30d,

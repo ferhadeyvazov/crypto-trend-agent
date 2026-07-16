@@ -274,6 +274,26 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     expect(logger.events.some((e) => e.level === "SIGNAL" && e.message.includes("SOLUSDT"))).toBe(false);
   });
 
+  it("universe-dən düşmüş (amma açıq pozisiyası olan) simvol yenə də onBarClose alır — pozisiya 'yetim' qalmır", async () => {
+    const data = baseDataMap();
+    data.set("SOLUSDT|4h", buildStrongTrend4h());
+    data.set("SOLUSDT|1h", buildFlatNoSignal1h());
+
+    const { engine } = mkEngine();
+    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
+    expect(engine.getPosition("SOLUSDT")!.state).toBe("PENDING_ENTRY");
+
+    const logger = new FakeLogger();
+    // Diqqət: universe SIRF ["BTCUSDT"] — SOLUSDT həftəlik rebalance-də universe-dən
+    // düşüb, amma açıq (PENDING_ENTRY) pozisiyası var.
+    await runCycle(["BTCUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
+    });
+
+    // Universe-də olmasa belə, açıq pozisiyası olduğu üçün onBarClose çağırılıb və fill olub
+    expect(engine.getPosition("SOLUSDT")!.state).toBe("OPEN_FULL");
+  });
+
   it("karantindəki aktiv keçilir, data xətası olan aktiv ERROR loglanıb ötürülür, qalanlar işləməyə davam edir", async () => {
     const data = baseDataMap();
     data.set("SOLUSDT|4h", buildModerateTrend4h());

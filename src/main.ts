@@ -13,7 +13,7 @@ import {
   CoinGeckoMarketCapSource,
   BinanceVolumeSource,
   BinancePairChecker,
-  type Tier,
+  type UniverseSelectionResult,
 } from "./universe/index.js";
 import { HealthTracker } from "./health/HealthTracker.js";
 import { createApiApp } from "./server/api/app.js";
@@ -105,8 +105,13 @@ async function main(): Promise<void> {
     logger.warn("Təzə başlanğıc — əvvəlki state tapılmadı");
   }
 
-  let universe = persisted?.universe ?? [];
-  let universeTierMap: Record<string, Tier> = persisted?.universeTierMap ?? {};
+  // Tək dəyişən (iki ayrı `let` yerinə): `universe`/`tierMap` HƏMİŞƏ eyni
+  // `selectUniverse()` çağırışından birgə gəlir, ayrı-ayrı yenilənə bilməzlər —
+  // desync riski struktur baxımından mümkün deyil (bax: PR review, D4).
+  let universeSelection: UniverseSelectionResult = {
+    universe: persisted?.universe ?? [],
+    tierMap: persisted?.universeTierMap ?? {},
+  };
   let universeLastRebalanceAt = persisted?.universeLastRebalanceAt ?? null;
 
   const universeSelector = new UniverseSelector({
@@ -124,23 +129,25 @@ async function main(): Promise<void> {
     await statePersistence.save({
       savedAt: now(),
       executionEngine: executionEngine.exportState(),
-      universe,
+      universe: universeSelection.universe,
       universeLastRebalanceAt,
-      universeTierMap,
+      universeTierMap: universeSelection.tierMap,
     });
   }
 
   async function refreshUniverseIfNeeded(): Promise<void> {
-    if (universe.length > 0 && !shouldRebalanceUniverse(universeLastRebalanceAt, now())) return;
+    if (universeSelection.universe.length > 0 && !shouldRebalanceUniverse(universeLastRebalanceAt, now())) return;
     try {
-      const result = await universeSelector.selectUniverse();
-      universe = result.universe;
-      universeTierMap = result.tierMap;
+      universeSelection = await universeSelector.selectUniverse();
       universeLastRebalanceAt = now();
-      logger.warn("Universe yeniləndi", { size: universe.length, universe, tierMap: universeTierMap });
+      logger.warn("Universe yeniləndi", {
+        size: universeSelection.universe.length,
+        universe: universeSelection.universe,
+        tierMap: universeSelection.tierMap,
+      });
     } catch (err) {
       logger.error("Universe yenilənmədi", { error: String(err) });
-      if (universe.length === 0) throw err; // ilk başlanğıcda universe tapılmasa davam etmək mənasızdır
+      if (universeSelection.universe.length === 0) throw err; // ilk başlanğıcda universe tapılmasa davam etmək mənasızdır
     }
   }
 
@@ -180,12 +187,12 @@ async function main(): Promise<void> {
   for (;;) {
     await refreshUniverseIfNeeded();
     try {
-      await runCycle(universe, {
+      await runCycle(universeSelection.universe, {
         dataLayer,
         executionEngine,
         logger,
         config,
-        tierMap: universeTierMap,
+        tierMap: universeSelection.tierMap,
         onSignal: (signal) => emitServerEvent(serverEvents, "signal:new", signal),
         onRegimeSnapshot,
       });

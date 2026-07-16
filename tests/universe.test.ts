@@ -146,16 +146,17 @@ describe("UniverseSelector", () => {
   });
 
   describe("Tier2 (rank 21-100)", () => {
-    it("Tier1-dən ayrı öz minAvgDailyVolumeUsd/maxAssets limitləri ilə seçilir", async () => {
-      const tier1Assets: RankedAsset[] = [{ baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 }];
-      const tier2Assets: RankedAsset[] = [
+    it("Tier1-dən ayrı öz minAvgDailyVolumeUsd/maxAssets limitləri ilə seçilir (EYNİ ranked siyahıdan, tək fetch-dən)", async () => {
+      // topN=1 → yalnız rank1 (BTC) Tier1 pəncərəsindədir; qalanlar yalnız Tier2 namizədidir.
+      const ranked: RankedAsset[] = [
+        { baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 },
         { baseSymbol: "ALT1", marketCapUsd: 50, volumeUsd: 25_000_000 },
         { baseSymbol: "ALT2", marketCapUsd: 40, volumeUsd: 15_000_000 }, // Tier2 həddindən aşağı — xaric
         { baseSymbol: "ALT3", marketCapUsd: 30, volumeUsd: 30_000_000 },
       ];
-      let call = 0;
+      let fetchCalls = 0;
       const primarySource: MarketCapSource = {
-        fetchTopByMarketCap: async () => (call++ === 0 ? tier1Assets : tier2Assets),
+        fetchTopByMarketCap: async () => { fetchCalls++; return ranked; },
       };
       const selector = new UniverseSelector({
         primarySource,
@@ -163,6 +164,7 @@ describe("UniverseSelector", () => {
         pairChecker: {
           getActiveUsdtPairs: async () => new Set(["BTCUSDT", "ALT1USDT", "ALT2USDT", "ALT3USDT"]),
         },
+        topN: 1,
         maxAssets: 20,
         minAvgDailyVolumeUsd: 50_000_000,
         tier2: { maxRank: 100, minAvgDailyVolumeUsd: 20_000_000, maxAssets: 15 },
@@ -170,6 +172,47 @@ describe("UniverseSelector", () => {
       const result = await selector.selectUniverse();
       expect(result.universe).toEqual(["BTCUSDT", "ALT1USDT", "ALT3USDT"]);
       expect(result.tierMap).toEqual({ BTCUSDT: "TIER1", ALT1USDT: "TIER2", ALT3USDT: "TIER2" });
+      // Tier1 və Tier2 EYNİ fetch nəticəsindən törəyir — ayrı-ayrı 2 sorğu getmir (bax: PR review, D1)
+      expect(fetchCalls).toBe(1);
+    });
+
+    it("tier2 konfiqurasiya olunanda topN/tier2.maxRank-dan böyüyü tək dəfə fetch edir", async () => {
+      let requestedLimit: number | null = null;
+      const primarySource: MarketCapSource = {
+        fetchTopByMarketCap: async (limit) => {
+          requestedLimit = limit;
+          return [{ baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 }];
+        },
+      };
+      const selector = new UniverseSelector({
+        primarySource,
+        fallbackSource: mkSource([]),
+        pairChecker: { getActiveUsdtPairs: async () => new Set(["BTCUSDT"]) },
+        topN: 30,
+        maxAssets: 20,
+        minAvgDailyVolumeUsd: 50_000_000,
+        tier2: { maxRank: 100, minAvgDailyVolumeUsd: 20_000_000, maxAssets: 15 },
+      });
+      await selector.selectUniverse();
+      expect(requestedLimit).toBe(100); // max(topN=30, tier2.maxRank=100)
+    });
+
+    it("CoinGecko xəta verəndə tier2 konfiqurasiya olunsa belə fallback-a YALNIZ BİR dəfə keçir", async () => {
+      const warnings: string[] = [];
+      const failingSource: MarketCapSource = {
+        fetchTopByMarketCap: async () => { throw new Error("rate limit"); },
+      };
+      const selector = new UniverseSelector({
+        primarySource: failingSource,
+        fallbackSource: mkSource([{ baseSymbol: "BTC", marketCapUsd: 0, volumeUsd: 100_000_000 }]),
+        pairChecker: { getActiveUsdtPairs: async () => new Set(["BTCUSDT"]) },
+        maxAssets: 20,
+        minAvgDailyVolumeUsd: 50_000_000,
+        tier2: { maxRank: 100, minAvgDailyVolumeUsd: 20_000_000, maxAssets: 15 },
+        onWarning: (msg) => warnings.push(msg),
+      });
+      await selector.selectUniverse();
+      expect(warnings).toHaveLength(1);
     });
 
     it("Tier1-də artıq seçilmiş cütü Tier2-yə təkrar əlavə etmir", async () => {

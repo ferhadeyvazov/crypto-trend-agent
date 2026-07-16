@@ -18,6 +18,7 @@ export function PositionsTable() {
         <thead>
           <tr>
             <th className={thClass}>{t("th_symbol")}</th>
+            <th className={thClass}>{t("th_tier")}</th>
             <th className={thClass}>{t("th_side")}</th>
             <th className={thClass}>{t("th_entry")}</th>
             <th className={thClass}>{t("th_size")}</th>
@@ -32,6 +33,9 @@ export function PositionsTable() {
             return (
               <tr key={p.id} className="transition-colors hover:bg-panel-2">
                 <td className={`${tdClass} tabular-num`}>{p.symbol}</td>
+                <td className={tdClass}>
+                  <Badge variant={p.tier === "TIER2" ? "tier2" : "tier1"}>{p.tier}</Badge>
+                </td>
                 <td className={tdClass}>
                   <Badge variant={p.side === "long" ? "long" : "short"}>{p.side.toUpperCase()}</Badge>
                 </td>

@@ -27,7 +27,7 @@ async function main(): Promise<void> {
 
   const seedTrades: TradeRecord[] = [
     {
-      id: "seed-1", symbol: "ETHUSDT", side: "LONG", signalType: "PULLBACK",
+      id: "seed-1", symbol: "ETHUSDT", side: "LONG", signalType: "PULLBACK", tier: "TIER1",
       entryTime: nowMs - 3 * 3_600_000, entryPrice: 3412, stopPrice: 3350, tp1Price: 3500, size: 1,
       exitTime: nowMs - 3_600_000, exitPrice: 3486, exitReason: "X3_TRAILING_STOP",
       grossPnl: 74, fees: 3.8, slippage: 0, netPnl: 74.2, rMultiple: 1.2,
@@ -35,11 +35,11 @@ async function main(): Promise<void> {
       regime4h: "LONG_ONLY", adx4h: 27, atr1h: 40,
     },
     {
-      id: "seed-2", symbol: "BTCUSDT", side: "LONG", signalType: "BREAKOUT",
-      entryTime: nowMs - 26 * 3_600_000, entryPrice: 65880, stopPrice: 65200, tp1Price: 67000, size: 0.03,
-      exitTime: nowMs - 20 * 3_600_000, exitPrice: 65210, exitReason: "X1_INITIAL_STOP",
-      grossPnl: -20, fees: 2, slippage: 0.1, netPnl: -41.3, rMultiple: -1,
-      equityAfter: config.paperTrading.initialEquityUsd, regime4h: "LONG_ONLY", adx4h: 31, atr1h: 700,
+      id: "seed-2", symbol: "NEARUSDT", side: "LONG", signalType: "BREAKOUT", tier: "TIER2",
+      entryTime: nowMs - 26 * 3_600_000, entryPrice: 6.58, stopPrice: 6.35, tp1Price: 6.9, size: 30,
+      exitTime: nowMs - 20 * 3_600_000, exitPrice: 6.36, exitReason: "X1_INITIAL_STOP",
+      grossPnl: -6.6, fees: 2, slippage: 0.1, netPnl: -41.3, rMultiple: -1,
+      equityAfter: config.paperTrading.initialEquityUsd, regime4h: "LONG_ONLY", adx4h: 31, atr1h: 0.2,
     },
   ];
   const seedEvents = [

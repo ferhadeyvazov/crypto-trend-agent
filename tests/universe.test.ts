@@ -108,8 +108,9 @@ describe("UniverseSelector", () => {
       minAvgDailyVolumeUsd: 50_000_000,
       maxAssets: 20,
     });
-    const universe = await selector.selectUniverse();
-    expect(universe).toEqual(["BTCUSDT", "SOLUSDT"]);
+    const result = await selector.selectUniverse();
+    expect(result.universe).toEqual(["BTCUSDT", "SOLUSDT"]);
+    expect(result.tierMap).toEqual({ BTCUSDT: "TIER1", SOLUSDT: "TIER1" });
   });
 
   it("ilk N aktivlə məhdudlaşdırır (maxAssets)", async () => {
@@ -122,8 +123,8 @@ describe("UniverseSelector", () => {
       pairChecker: { getActiveUsdtPairs: async () => new Set(assets.map((a) => `${a.baseSymbol}USDT`)) },
       maxAssets: 2,
     });
-    const universe = await selector.selectUniverse();
-    expect(universe).toEqual(["A0USDT", "A1USDT"]);
+    const result = await selector.selectUniverse();
+    expect(result.universe).toEqual(["A0USDT", "A1USDT"]);
   });
 
   it("əsas mənbə xəta verəndə fallback-a keçir və xəbərdarlıq edir", async () => {
@@ -138,9 +139,66 @@ describe("UniverseSelector", () => {
       onWarning: (msg) => warnings.push(msg),
       minAvgDailyVolumeUsd: 50_000_000,
     });
-    const universe = await selector.selectUniverse();
-    expect(universe).toEqual(["BTCUSDT"]);
+    const result = await selector.selectUniverse();
+    expect(result.universe).toEqual(["BTCUSDT"]);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatch(/CoinGecko/);
+  });
+
+  describe("Tier2 (rank 21-100)", () => {
+    it("Tier1-dən ayrı öz minAvgDailyVolumeUsd/maxAssets limitləri ilə seçilir", async () => {
+      const tier1Assets: RankedAsset[] = [{ baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 }];
+      const tier2Assets: RankedAsset[] = [
+        { baseSymbol: "ALT1", marketCapUsd: 50, volumeUsd: 25_000_000 },
+        { baseSymbol: "ALT2", marketCapUsd: 40, volumeUsd: 15_000_000 }, // Tier2 həddindən aşağı — xaric
+        { baseSymbol: "ALT3", marketCapUsd: 30, volumeUsd: 30_000_000 },
+      ];
+      let call = 0;
+      const primarySource: MarketCapSource = {
+        fetchTopByMarketCap: async () => (call++ === 0 ? tier1Assets : tier2Assets),
+      };
+      const selector = new UniverseSelector({
+        primarySource,
+        fallbackSource: mkSource([]),
+        pairChecker: {
+          getActiveUsdtPairs: async () => new Set(["BTCUSDT", "ALT1USDT", "ALT2USDT", "ALT3USDT"]),
+        },
+        maxAssets: 20,
+        minAvgDailyVolumeUsd: 50_000_000,
+        tier2: { maxRank: 100, minAvgDailyVolumeUsd: 20_000_000, maxAssets: 15 },
+      });
+      const result = await selector.selectUniverse();
+      expect(result.universe).toEqual(["BTCUSDT", "ALT1USDT", "ALT3USDT"]);
+      expect(result.tierMap).toEqual({ BTCUSDT: "TIER1", ALT1USDT: "TIER2", ALT3USDT: "TIER2" });
+    });
+
+    it("Tier1-də artıq seçilmiş cütü Tier2-yə təkrar əlavə etmir", async () => {
+      const shared: RankedAsset[] = [{ baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 }];
+      const primarySource: MarketCapSource = { fetchTopByMarketCap: async () => shared };
+      const selector = new UniverseSelector({
+        primarySource,
+        fallbackSource: mkSource([]),
+        pairChecker: { getActiveUsdtPairs: async () => new Set(["BTCUSDT"]) },
+        maxAssets: 20,
+        minAvgDailyVolumeUsd: 50_000_000,
+        tier2: { maxRank: 100, minAvgDailyVolumeUsd: 20_000_000, maxAssets: 15 },
+      });
+      const result = await selector.selectUniverse();
+      expect(result.universe).toEqual(["BTCUSDT"]);
+      expect(result.tierMap).toEqual({ BTCUSDT: "TIER1" });
+    });
+
+    it("tier2 opsiyası verilməyəndə Tier2 boş qalır", async () => {
+      const selector = new UniverseSelector({
+        primarySource: mkSource([{ baseSymbol: "BTC", marketCapUsd: 100, volumeUsd: 100_000_000 }]),
+        fallbackSource: mkSource([]),
+        pairChecker: { getActiveUsdtPairs: async () => new Set(["BTCUSDT"]) },
+        maxAssets: 20,
+        minAvgDailyVolumeUsd: 50_000_000,
+      });
+      const result = await selector.selectUniverse();
+      expect(result.universe).toEqual(["BTCUSDT"]);
+      expect(result.tierMap).toEqual({ BTCUSDT: "TIER1" });
+    });
   });
 });

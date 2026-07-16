@@ -75,7 +75,7 @@ describe("Dashboard REST API", () => {
 
   it("GET /api/positions — yalnız fill olmuş pozisiyaları, unrealizedPnl ilə qaytarır", async () => {
     ctx = await startTestServer();
-    ctx.executionEngine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    ctx.executionEngine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     // hələ fill olmayıb (PENDING_ENTRY) — siyahıda görünməməlidir
     let res = await fetch(`${ctx.baseUrl}/api/positions`);
     let body = await res.json();
@@ -167,7 +167,7 @@ describe("Dashboard REST API", () => {
     expect(stopBody.data.engineState).toBe("paused");
     expect(ctx.executionEngine.isEntriesPaused()).toBe(true);
 
-    const blockedResult = ctx.executionEngine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    const blockedResult = ctx.executionEngine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(blockedResult).toEqual({ queued: false, reason: "ENTRIES_PAUSED" });
 
     const startRes = await fetch(`${ctx.baseUrl}/api/engine/start`, {

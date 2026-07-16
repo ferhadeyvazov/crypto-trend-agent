@@ -1,4 +1,5 @@
 import type { SignalDirection, EntrySignalType, Regime } from "../signals/types.js";
+import type { Tier } from "../universe/index.js";
 
 // ===================================================================
 // ExecutionEngine tipləri (sənəd, bölmə 6, 9, 10).
@@ -22,6 +23,8 @@ export interface Position {
   direction: SignalDirection;
   state: PositionState;
   signalType: EntrySignalType;
+  /** Giriş anında sabitlənir (bax: universe/types.ts) — sonrakı həftəlik rebalance geriyə təsir etmir */
+  tier: Tier;
 
   /** İlkin sifariş ölçüsü (RiskManager-dən) */
   originalSize: number;
@@ -73,6 +76,7 @@ export interface TradeRecord {
   symbol: string;
   side: SignalDirection;
   signalType: EntrySignalType;
+  tier: Tier;
   entryTime: number;
   entryPrice: number;
   stopPrice: number;

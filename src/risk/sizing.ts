@@ -1,5 +1,6 @@
 import type { StrategyConfig } from "../config/index.js";
 import type { SizingResult } from "./types.js";
+import type { Tier } from "../universe/index.js";
 
 // ===================================================================
 // Pozisiya ölçüləndirmə (sənəd, bölmə 7).
@@ -20,8 +21,13 @@ export function computePositionSize(
   stopPrice: number,
   minNotional: number,
   config: StrategyConfig,
+  tier: Tier = "TIER1",
 ): SizingResult {
-  const riskAmount = equity * config.risk.riskPerTrade;
+  const riskPerTrade = tier === "TIER2" ? config.risk.tier2.riskPerTrade : config.risk.riskPerTrade;
+  const maxNotionalPctPerPosition =
+    tier === "TIER2" ? config.risk.tier2.maxNotionalPctPerPosition : config.risk.maxNotionalPctPerPosition;
+
+  const riskAmount = equity * riskPerTrade;
   const stopDistance = Math.abs(entryPrice - stopPrice);
 
   if (stopDistance <= 0) {
@@ -31,7 +37,7 @@ export function computePositionSize(
   let positionSize = riskAmount / stopDistance;
   let notional = positionSize * entryPrice;
 
-  const maxNotional = equity * (config.risk.maxNotionalPctPerPosition / 100);
+  const maxNotional = equity * (maxNotionalPctPerPosition / 100);
   if (notional > maxNotional) {
     positionSize = maxNotional / entryPrice;
     notional = maxNotional;

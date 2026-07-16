@@ -38,7 +38,16 @@ export function checkPortfolioLimits(
     failed.push("F5_MAX_OPEN_POSITIONS");
   }
 
-  const totalOpenRisk = openPositions.reduce((sum, p) => sum + p.openRiskPct, 0) + config.risk.riskPerTrade;
+  if (candidate.tier === "TIER2") {
+    const tier2Open = openPositions.filter((p) => p.tier === "TIER2").length;
+    if (tier2Open >= config.portfolio.maxTier2OpenPositions) {
+      failed.push("F5_MAX_TIER2_POSITIONS");
+    }
+  }
+
+  const candidateRiskPerTrade =
+    candidate.tier === "TIER2" ? config.risk.tier2.riskPerTrade : config.risk.riskPerTrade;
+  const totalOpenRisk = openPositions.reduce((sum, p) => sum + p.openRiskPct, 0) + candidateRiskPerTrade;
   if (totalOpenRisk > config.portfolio.maxTotalOpenRiskPct / 100) {
     failed.push("F5_MAX_TOTAL_OPEN_RISK");
   }
@@ -60,12 +69,19 @@ export function checkPortfolioLimits(
  * BTC regime guard (bölmə 8): BTC-nin 4h rejimi zəifdirsə (SHORT_ONLY/NO_TRADE),
  * altcoin LONG girişləri üçün ADX tələbi minLong-dan (23) minAltWhenBtcWeak-a
  * (28) qalxır. BTC/ETH-in özü (isCoreAsset) bu qaydadan təsirlənmir.
+ *
+ * Tier2 (rank 21-100) LONG-lar üçün bu daha sərt bar (28) BTC rejimindən
+ * asılı olmadan HƏMİŞƏ tələb olunur — alt-lərin trendi Tier1-dən daha
+ * etibarsız olduğu üçün.
  */
 export function isAdxSufficientForCandidate(
-  candidate: Pick<PortfolioCandidate, "isCoreAsset" | "direction" | "adx4h">,
+  candidate: Pick<PortfolioCandidate, "isCoreAsset" | "direction" | "adx4h" | "tier">,
   btcRegime: Regime,
   config: StrategyConfig,
 ): boolean {
+  if (candidate.tier === "TIER2" && candidate.direction === "LONG") {
+    return candidate.adx4h >= config.indicators.adx_4h.minAltWhenBtcWeak;
+  }
   const btcWeak = btcRegime === "SHORT_ONLY" || btcRegime === "NO_TRADE";
   const guardActive = !candidate.isCoreAsset && candidate.direction === "LONG" && btcWeak;
   const minAdx = guardActive ? config.indicators.adx_4h.minAltWhenBtcWeak : config.indicators.adx_4h.minLong;

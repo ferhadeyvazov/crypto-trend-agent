@@ -13,6 +13,8 @@ export interface PerformanceReport {
   /** netPnl-ə görə artan sırada, ən çox 5 */
   worstTrades: TradeRecord[];
   equityCurve: EquityPoint[];
+  /** Tier1 (top20) vs Tier2 (rank 21-100) performansının ayrıca müqayisəsi üçün. */
+  tierBreakdown: { tier1: PerformanceMetrics; tier2: PerformanceMetrics };
 }
 
 export function topTrades(trades: TradeRecord[], count: number, best: boolean): TradeRecord[] {
@@ -40,11 +42,27 @@ export function buildPerformanceReport(
   const goLive = evaluateGoLiveCriteria(metrics, config);
   const equityCurve = buildEquityCurve(trades, config.paperTrading.initialEquityUsd, context.startTime);
 
+  const tierBreakdown = {
+    tier1: computePerformanceMetrics(
+      trades.filter((t) => t.tier === "TIER1"),
+      config.paperTrading.initialEquityUsd,
+      context.startTime,
+      context.criticalErrorCount30d,
+    ),
+    tier2: computePerformanceMetrics(
+      trades.filter((t) => t.tier === "TIER2"),
+      config.paperTrading.initialEquityUsd,
+      context.startTime,
+      context.criticalErrorCount30d,
+    ),
+  };
+
   return {
     metrics,
     goLive,
     bestTrades: topTrades(trades, 5, true),
     worstTrades: topTrades(trades, 5, false),
     equityCurve,
+    tierBreakdown,
   };
 }

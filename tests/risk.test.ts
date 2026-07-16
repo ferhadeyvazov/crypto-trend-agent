@@ -44,10 +44,22 @@ describe("computePositionSize", () => {
     expect(r.skipped).toBe("INVALID_STOP_DISTANCE");
     expect(r.positionSize).toBe(0);
   });
+
+  it("TIER2: config.risk.tier2.riskPerTrade (0.4%) və maxNotionalPctPerPosition (12%) istifadə olunur", () => {
+    // riskAmount = 10000*0.004 = 40, stopDistance=10, positionSize=4, notional=400 (< 12% cap=1200)
+    const r = computePositionSize(10000, 100, 90, 10, config, "TIER2");
+    expect(r).toEqual({ positionSize: 4, notional: 400, riskAmount: 40, stopDistance: 10, skipped: null });
+  });
+
+  it("TIER2 notional 12% tavanını Tier1-dən (20%) daha erkən aşır", () => {
+    // riskAmount=40, stopDistance=1.8, xam notional=40/1.8*100=2222.2 > tier2 cap(1200)
+    const r = computePositionSize(10000, 100, 98.2, 10, config, "TIER2");
+    expect(r.notional).toBeCloseTo(1200, 8);
+  });
 });
 
 describe("checkPortfolioLimits", () => {
-  const altLong: PortfolioCandidate = { symbol: "SOLUSDT", direction: "LONG", isCoreAsset: false, adx4h: 25 };
+  const altLong: PortfolioCandidate = { symbol: "SOLUSDT", direction: "LONG", isCoreAsset: false, adx4h: 25, tier: "TIER1" };
 
   it("bütün limitlər daxilindədirsə keçir", () => {
     const result = checkPortfolioLimits(altLong, [], config);
@@ -56,7 +68,7 @@ describe("checkPortfolioLimits", () => {
 
   it("maks açıq pozisiya sayına çatanda rədd edilir", () => {
     const openPositions: OpenPositionInfo[] = Array.from({ length: 6 }, (_, i) => ({
-      symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0,
+      symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" as const,
     }));
     const result = checkPortfolioLimits(altLong, openPositions, config);
     expect(result.passed).toBe(false);
@@ -66,7 +78,7 @@ describe("checkPortfolioLimits", () => {
   it("ümumi açıq risk limiti aşılanda rədd edilir", () => {
     // mövcud 3% + yeni trade-in riski (0.75%) = 3.75% > maxTotalOpenRiskPct(3.5%)
     const openPositions: OpenPositionInfo[] = [
-      { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, openRiskPct: 0.03 },
+      { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, openRiskPct: 0.03, tier: "TIER1" },
     ];
     const result = checkPortfolioLimits(altLong, openPositions, config);
     expect(result.passed).toBe(false);
@@ -76,7 +88,7 @@ describe("checkPortfolioLimits", () => {
   it("korrelyasiya qaydası: BTC/ETH xaric, eyni istiqamətdə 4 altcoin limitindən sonra rədd edilir", () => {
     const openPositions: OpenPositionInfo[] = [
       ...Array.from({ length: 4 }, (_, i): OpenPositionInfo => (
-        { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0 }
+        { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" }
       )),
     ];
     const result = checkPortfolioLimits(altLong, openPositions, config);
@@ -84,9 +96,9 @@ describe("checkPortfolioLimits", () => {
   });
 
   it("korrelyasiya qaydası BTC/ETH-ə (core asset) tətbiq olunmur", () => {
-    const btcCandidate: PortfolioCandidate = { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, adx4h: 25 };
+    const btcCandidate: PortfolioCandidate = { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, adx4h: 25, tier: "TIER1" };
     const openPositions: OpenPositionInfo[] = Array.from({ length: 4 }, (_, i): OpenPositionInfo => (
-      { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0 }
+      { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" }
     ));
     const result = checkPortfolioLimits(btcCandidate, openPositions, config);
     expect(result.failed).not.toContain("F5_CORRELATION_LIMIT");
@@ -94,17 +106,48 @@ describe("checkPortfolioLimits", () => {
 
   it("əks istiqamətdəki altcoin pozisiyaları korrelyasiya sayına daxil edilmir", () => {
     const openPositions: OpenPositionInfo[] = Array.from({ length: 4 }, (_, i): OpenPositionInfo => (
-      { symbol: `A${i}USDT`, direction: "SHORT", isCoreAsset: false, openRiskPct: 0 }
+      { symbol: `A${i}USDT`, direction: "SHORT", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" }
     ));
     const result = checkPortfolioLimits(altLong, openPositions, config); // altLong = LONG
     expect(result.failed).not.toContain("F5_CORRELATION_LIMIT");
   });
+
+  it("TIER2 namizəd üçün maxTier2OpenPositions (2) həddinə çatanda F5_MAX_TIER2_POSITIONS", () => {
+    const tier2Candidate: PortfolioCandidate = { symbol: "ALTUSDT", direction: "LONG", isCoreAsset: false, adx4h: 30, tier: "TIER2" };
+    const openPositions: OpenPositionInfo[] = Array.from({ length: 2 }, (_, i): OpenPositionInfo => (
+      { symbol: `T2-${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER2" }
+    ));
+    const result = checkPortfolioLimits(tier2Candidate, openPositions, config);
+    expect(result.failed).toContain("F5_MAX_TIER2_POSITIONS");
+  });
+
+  it("TIER2 limiti yalnız TIER2 açıq pozisiyalarını sayır, TIER1-i yox", () => {
+    const tier2Candidate: PortfolioCandidate = { symbol: "ALTUSDT", direction: "LONG", isCoreAsset: false, adx4h: 30, tier: "TIER2" };
+    const openPositions: OpenPositionInfo[] = Array.from({ length: 5 }, (_, i): OpenPositionInfo => (
+      { symbol: `T1-${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" }
+    ));
+    const result = checkPortfolioLimits(tier2Candidate, openPositions, config);
+    expect(result.failed).not.toContain("F5_MAX_TIER2_POSITIONS");
+  });
+
+  it("TIER2 namizədin açıq risk hesablamasında tier2.riskPerTrade (0.4%) istifadə olunur, Tier1-in 0.75%-i yox", () => {
+    // mövcud 3.2% + TIER2-nin öz riski (0.4%) = 3.6% > maxTotalOpenRiskPct(3.5%) — Tier1-in 0.75%-i ilə (3.95%) də aşardı,
+    // amma məqsəd düzgün sahənin oxunduğunu göstərməkdir: 3.2%+0.4%=3.6% > 3.5% aşır, test buna görə qurulub.
+    const tier2Candidate: PortfolioCandidate = { symbol: "ALTUSDT", direction: "LONG", isCoreAsset: false, adx4h: 30, tier: "TIER2" };
+    const openPositions: OpenPositionInfo[] = [
+      { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, openRiskPct: 0.032, tier: "TIER1" },
+    ];
+    const result = checkPortfolioLimits(tier2Candidate, openPositions, config);
+    expect(result.failed).toContain("F5_MAX_TOTAL_OPEN_RISK");
+  });
 });
 
 describe("isAdxSufficientForCandidate — BTC regime guard", () => {
-  const alt = (adx4h: number, direction: "LONG" | "SHORT" = "LONG"): PortfolioCandidate => (
-    { symbol: "SOLUSDT", direction, isCoreAsset: false, adx4h }
-  );
+  const alt = (
+    adx4h: number,
+    direction: "LONG" | "SHORT" = "LONG",
+    tier: "TIER1" | "TIER2" = "TIER1",
+  ): PortfolioCandidate => ({ symbol: "SOLUSDT", direction, isCoreAsset: false, adx4h, tier });
 
   it("BTC zəifdirsə (NO_TRADE), altcoin LONG üçün ADX 28-dən az olanda rədd edilir", () => {
     expect(isAdxSufficientForCandidate(alt(25), "NO_TRADE", config)).toBe(false);
@@ -123,8 +166,17 @@ describe("isAdxSufficientForCandidate — BTC regime guard", () => {
   });
 
   it("guard core aktivlərə (BTC/ETH-in özü) tətbiq olunmur", () => {
-    const btc: PortfolioCandidate = { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, adx4h: 25 };
+    const btc: PortfolioCandidate = { symbol: "BTCUSDT", direction: "LONG", isCoreAsset: true, adx4h: 25, tier: "TIER1" };
     expect(isAdxSufficientForCandidate(btc, "NO_TRADE", config)).toBe(true);
+  });
+
+  it("TIER2 LONG üçün ADX 28 bar-ı BTC rejimindən ASILI OLMAYARAQ tələb olunur (BTC güclü olsa belə)", () => {
+    expect(isAdxSufficientForCandidate(alt(25, "LONG", "TIER2"), "LONG_ONLY", config)).toBe(false);
+    expect(isAdxSufficientForCandidate(alt(30, "LONG", "TIER2"), "LONG_ONLY", config)).toBe(true);
+  });
+
+  it("TIER2 SHORT-a bu daim-aktiv qayda tətbiq olunmur (yalnız LONG-a xasdır)", () => {
+    expect(isAdxSufficientForCandidate(alt(25, "SHORT", "TIER2"), "LONG_ONLY", config)).toBe(true);
   });
 });
 
@@ -151,7 +203,7 @@ describe("checkLossLimits", () => {
 });
 
 describe("evaluateRisk — tam inteqrasiya", () => {
-  const candidate: PortfolioCandidate = { symbol: "SOLUSDT", direction: "LONG", isCoreAsset: false, adx4h: 25 };
+  const candidate: PortfolioCandidate = { symbol: "SOLUSDT", direction: "LONG", isCoreAsset: false, adx4h: 25, tier: "TIER1" };
   const entry = { entryPrice: 100, stopPrice: 90 };
   const baseContext = {
     equity: 10000,
@@ -185,7 +237,7 @@ describe("evaluateRisk — tam inteqrasiya", () => {
 
   it("portfel limiti pozulubsa rədd edir", () => {
     const openPositions: OpenPositionInfo[] = Array.from({ length: 6 }, (_, i): OpenPositionInfo => (
-      { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0 }
+      { symbol: `A${i}USDT`, direction: "LONG", isCoreAsset: false, openRiskPct: 0, tier: "TIER1" }
     ));
     const result = evaluateRisk(candidate, entry, { ...baseContext, openPositions }, config);
     expect(result.approved).toBe(false);

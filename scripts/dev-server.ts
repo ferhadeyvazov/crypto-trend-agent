@@ -69,7 +69,7 @@ async function main(): Promise<void> {
   // `inferStartTime`/`durationDays` hesablamasını (Go-Live Progress) pozar.
   executionEngine.queueEntry({
     symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK",
-    size: 0.05, atr1hAtSignal: 800, regime4h: "LONG_ONLY", adx4h: 30,
+    size: 0.05, atr1hAtSignal: 800, regime4h: "LONG_ONLY", adx4h: 30, tier: "TIER1",
   });
   const entryMs = nowMs - 3_600_000;
   executionEngine.onBarClose(

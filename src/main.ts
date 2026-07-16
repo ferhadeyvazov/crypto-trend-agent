@@ -13,6 +13,7 @@ import {
   CoinGeckoMarketCapSource,
   BinanceVolumeSource,
   BinancePairChecker,
+  type Tier,
 } from "./universe/index.js";
 import { HealthTracker } from "./health/HealthTracker.js";
 import { createApiApp } from "./server/api/app.js";
@@ -105,6 +106,7 @@ async function main(): Promise<void> {
   }
 
   let universe = persisted?.universe ?? [];
+  let universeTierMap: Record<string, Tier> = persisted?.universeTierMap ?? {};
   let universeLastRebalanceAt = persisted?.universeLastRebalanceAt ?? null;
 
   const universeSelector = new UniverseSelector({
@@ -115,6 +117,7 @@ async function main(): Promise<void> {
     topN: 30,
     maxAssets: config.universe.maxAssets,
     minAvgDailyVolumeUsd: config.universe.minAvgDailyVolumeUsd,
+    tier2: config.universe.tier2,
   });
 
   async function persistState(): Promise<void> {
@@ -123,15 +126,18 @@ async function main(): Promise<void> {
       executionEngine: executionEngine.exportState(),
       universe,
       universeLastRebalanceAt,
+      universeTierMap,
     });
   }
 
   async function refreshUniverseIfNeeded(): Promise<void> {
     if (universe.length > 0 && !shouldRebalanceUniverse(universeLastRebalanceAt, now())) return;
     try {
-      universe = await universeSelector.selectUniverse();
+      const result = await universeSelector.selectUniverse();
+      universe = result.universe;
+      universeTierMap = result.tierMap;
       universeLastRebalanceAt = now();
-      logger.warn("Universe yeniləndi", { size: universe.length, universe });
+      logger.warn("Universe yeniləndi", { size: universe.length, universe, tierMap: universeTierMap });
     } catch (err) {
       logger.error("Universe yenilənmədi", { error: String(err) });
       if (universe.length === 0) throw err; // ilk başlanğıcda universe tapılmasa davam etmək mənasızdır
@@ -179,6 +185,7 @@ async function main(): Promise<void> {
         executionEngine,
         logger,
         config,
+        tierMap: universeTierMap,
         onSignal: (signal) => emitServerEvent(serverEvents, "signal:new", signal),
         onRegimeSnapshot,
       });

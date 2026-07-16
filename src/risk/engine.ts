@@ -53,6 +53,7 @@ export function evaluateRisk(
     entry.stopPrice,
     context.minNotional,
     config,
+    candidate.tier,
   );
   if (sizing.skipped) {
     return { approved: false, sizing, rejected: [sizing.skipped] };

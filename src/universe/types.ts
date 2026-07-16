@@ -20,3 +20,11 @@ export interface MarketCapSource {
   /** Market cap-a görə azalan sırada, ən çox `limit` aktiv qaytarır */
   fetchTopByMarketCap(limit: number): Promise<RankedAsset[]>;
 }
+
+/**
+ * Tier1 = top-20 market cap (dəyişməz, ilkin universe). Tier2 = rank 21-100
+ * mid-cap/alt seqmenti, ayrı (daha sərt) risk zərfi ilə. Açıq pozisiyanın
+ * tier-i giriş anında sabitlənir (bax: universeSelector.ts, runCycle.ts) —
+ * həftəlik rebalance mövcud pozisiyanın tier-ini geriyə dəyişmir.
+ */
+export type Tier = "TIER1" | "TIER2";

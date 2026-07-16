@@ -14,6 +14,25 @@ export function buildEquityCurve(trades: TradeRecord[], initialEquity: number, s
   return curve;
 }
 
+/**
+ * `buildEquityCurve`-dən fərqli olaraq `equityAfter`-ə (bütün portfelin ORTAQ
+ * equity-si) yox, YALNIZ verilən trade-lərin öz netPnl-lərinin cəminə əsaslanır.
+ * Tier-ə görə FİLTRLƏNMİŞ alt-çoxluqlar üçün lazımdır — `equityAfter` digər
+ * tier-in trade-lərinin PnL-ini də ehtiva etdiyi üçün, filtrlənmiş çoxluqda
+ * onu birbaşa istifadə etmək digər tier-in nəticəsini bu tier-ə "sızdırar"
+ * (bax: src/reporting/report.ts-in `tierBreakdown`-u).
+ */
+export function buildIsolatedEquityCurve(trades: TradeRecord[], initialEquity: number, startTime: number): EquityPoint[] {
+  const sorted = [...trades].sort((a, b) => a.exitTime - b.exitTime);
+  const curve: EquityPoint[] = [{ time: startTime, equity: initialEquity }];
+  let equity = initialEquity;
+  for (const t of sorted) {
+    equity += t.netPnl;
+    curve.push({ time: t.exitTime, equity });
+  }
+  return curve;
+}
+
 /** Zirvədən-dibə ən böyük düşüş, faizlə (0-100). */
 export function computeMaxDrawdownPct(curve: EquityPoint[]): number {
   if (curve.length === 0) return 0;

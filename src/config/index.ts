@@ -17,6 +17,11 @@ export interface StrategyConfig {
     minAvgDailyVolumeUsd: number;
     maxAssets: number;
     rebalance: string;
+    tier2: {
+      maxRank: number;
+      minAvgDailyVolumeUsd: number;
+      maxAssets: number;
+    };
   };
   timeframes: { trend: "4h"; execution: "1h"; minHistoryBars: number };
   indicators: {
@@ -48,11 +53,16 @@ export interface StrategyConfig {
     maxConsecutiveLosses: number;
     streakPauseHours: number;
     weeklyHaltLossPct: number;
+    tier2: {
+      riskPerTrade: number;
+      maxNotionalPctPerPosition: number;
+    };
   };
   portfolio: {
     maxOpenPositions: number;
     maxTotalOpenRiskPct: number;
     maxSameDirectionAltcoins: number;
+    maxTier2OpenPositions: number;
     signalPriority: string;
   };
   exit: {

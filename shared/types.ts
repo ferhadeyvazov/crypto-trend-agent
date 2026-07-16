@@ -8,6 +8,9 @@
 
 export type PositionSide = "long" | "short";
 
+/** Mənbə: src/universe/types.ts Tier (eyni hərfi-hərfinə dəyər) — Tier1 (top20) / Tier2 (rank 21-100). */
+export type Tier = "TIER1" | "TIER2";
+
 /** GET /api/portfolio cavabı (plan bölmə 1 MVP scope — FEDYA_TRAIDER_V2_PLAN.md bölmə 5-də ayrıca cədvəl sətri yoxdur, Mərhələ 2-də formalaşdırılıb). */
 export interface PortfolioSummary {
   equity: number;
@@ -26,6 +29,7 @@ interface PositionCommon {
   id: string;
   symbol: string;
   side: PositionSide;
+  tier: Tier;
   entryPrice: number;
   size: number;
   stopLoss: number;

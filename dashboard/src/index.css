@@ -14,6 +14,8 @@
   --color-green: #22c55e;
   --color-red: #ef4444;
   --color-neutral: #64748b;
+  --color-tier1: #3b82f6;
+  --color-tier2: #a855f7;
 
   --font-ui: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;

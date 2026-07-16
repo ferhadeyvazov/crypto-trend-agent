@@ -14,7 +14,12 @@
     ],
     "minAvgDailyVolumeUsd": 50000000,
     "maxAssets": 20,
-    "rebalance": "weekly-monday-00:00-UTC"
+    "rebalance": "weekly-monday-00:00-UTC",
+    "tier2": {
+      "maxRank": 100,
+      "minAvgDailyVolumeUsd": 20000000,
+      "maxAssets": 15
+    }
   },
   "timeframes": {
     "trend": "4h",
@@ -77,12 +82,17 @@
     "dailyLossLimitPct": 3.0,
     "maxConsecutiveLosses": 4,
     "streakPauseHours": 12,
-    "weeklyHaltLossPct": 6.0
+    "weeklyHaltLossPct": 6.0,
+    "tier2": {
+      "riskPerTrade": 0.004,
+      "maxNotionalPctPerPosition": 12
+    }
   },
   "portfolio": {
     "maxOpenPositions": 6,
     "maxTotalOpenRiskPct": 3.5,
     "maxSameDirectionAltcoins": 4,
+    "maxTier2OpenPositions": 2,
     "signalPriority": "adx4h_desc"
   },
   "paperTrading": {

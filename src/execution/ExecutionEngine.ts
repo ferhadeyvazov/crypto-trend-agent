@@ -13,6 +13,7 @@ import { simulateEntryFill, resolveOpenFullBarOutcome, resolveOpenRunnerBarOutco
 import { computeCommission, computeSlippagePct, applySlippage } from "./costModel.js";
 import { evaluateSystemState, INITIAL_SYSTEM_STATE, type SystemStateInfo, type SystemState } from "./systemState.js";
 import type { Position, TradeRecord, ExitReason, EngineStateLogEntry } from "./types.js";
+import type { Tier } from "../universe/index.js";
 
 // ===================================================================
 // ExecutionEngine (sənəd, bölmə 6, 9, 10). Per-asset pozisiya dövrəsini,
@@ -30,6 +31,7 @@ export interface QueueEntryParams {
   symbol: string;
   direction: SignalDirection;
   signalType: EntrySignalType;
+  tier: Tier;
   /** RiskManager-in hesabladığı ölçü (§7) */
   size: number;
   /** Siqnal barının ATR14(1h)-ı — X1/X2 düsturları bunun üzərində qurulur */
@@ -167,7 +169,10 @@ export class ExecutionEngine {
   /** §13 restart bərpası: verilmiş snapshot-dan yeni ExecutionEngine yaradır. */
   static restore(config: StrategyConfig, deps: ExecutionEngineDeps, snapshot: ExecutionEngineSnapshot): ExecutionEngine {
     const engine = new ExecutionEngine(config, deps);
-    engine.positions = new Map(snapshot.positions.map((p) => [p.symbol, p]));
+    // Tier2 dəyişikliyindən əvvəlki snapshot-larda `tier` sahəsi yoxdur — entriesPaused/
+    // engineStateLog-dakı kimi köhnə pozisiyalar TIER1 sayılır (Tier2-dən əvvəl yalnız
+    // TIER1 universe mövcud idi, ona görə bu, düzgün defoltdur, sadəcə "naməlum" deyil).
+    engine.positions = new Map(snapshot.positions.map((p) => [p.symbol, { ...p, tier: p.tier ?? "TIER1" }]));
     engine.equity = snapshot.equity;
     engine.systemStateInfo = snapshot.systemStateInfo;
     engine.consecutiveLosses = snapshot.consecutiveLosses;
@@ -205,6 +210,7 @@ export class ExecutionEngine {
       direction: params.direction,
       state: "PENDING_ENTRY",
       signalType: params.signalType,
+      tier: params.tier,
       originalSize: params.size,
       remainingSize: params.size,
       entryTime: null,
@@ -385,6 +391,7 @@ export class ExecutionEngine {
       symbol: pos.symbol,
       side: pos.direction,
       signalType: pos.signalType,
+      tier: pos.tier,
       entryTime: pos.entryTime!,
       entryPrice: pos.entryPrice!,
       stopPrice: pos.initialStop,

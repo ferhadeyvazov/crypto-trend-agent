@@ -1,3 +1,5 @@
+import type { Tier } from "../universe/index.js";
+
 // ===================================================================
 // RiskManager tipləri (sənəd, bölmə 7-8).
 // ===================================================================
@@ -20,6 +22,8 @@ export interface OpenPositionInfo {
   isCoreAsset: boolean;
   /** Bu pozisiyanın equity-ə nisbətən açıq riski, fraksiya (məs. 0.0075 = 0.75%) */
   openRiskPct: number;
+  /** Giriş anında sabitlənmiş tier (bax: universe/types.ts) */
+  tier: Tier;
 }
 
 export interface PortfolioCandidate {
@@ -27,6 +31,7 @@ export interface PortfolioCandidate {
   direction: "LONG" | "SHORT";
   isCoreAsset: boolean;
   adx4h: number;
+  tier: Tier;
 }
 
 export interface PortfolioLimitResult {

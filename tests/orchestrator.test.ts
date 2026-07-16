@@ -132,14 +132,32 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const { engine } = mkEngine();
     const logger = new FakeLogger();
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
     });
 
     const pos = engine.getPosition("SOLUSDT");
     expect(pos).toBeDefined();
     expect(pos!.state).toBe("PENDING_ENTRY");
     expect(pos!.direction).toBe("LONG");
+    expect(pos!.tier).toBe("TIER1");
     expect(logger.events.some((e) => e.level === "RISK" && e.message.includes("növbəyə qoyuldu"))).toBe(true);
+  });
+
+  it("TIER2 kimi işarələnmiş simvol: BTC güclü olsa belə, moderate-ADX (28-dən az) siqnal rədd edilir və giriş TIER2 kimi qeyd olunur", async () => {
+    const data = baseDataMap();
+    data.set("SOLUSDT|4h", buildModerateTrend4h()); // ADX ≈ 25.8 — TIER1 üçün kifayətdir, TIER2 üçün deyil
+    data.set("SOLUSDT|1h", buildBreakout1h());
+
+    const { engine } = mkEngine();
+    const logger = new FakeLogger();
+    await runCycle(["BTCUSDT", "SOLUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      tierMap: { SOLUSDT: "TIER2" },
+    });
+
+    expect(engine.getPosition("SOLUSDT")).toBeUndefined();
+    const riskLog = logger.events.find((e) => e.level === "RISK" && e.message.includes("SOLUSDT"));
+    expect(riskLog?.data?.reasons).toContain("BTC_REGIME_GUARD_ADX");
   });
 
   it("yeni siqnal tapılanda onSignal (dashboard signal:new üçün) çağırılır", async () => {
@@ -151,7 +169,7 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const logger = new FakeLogger();
     const signals: { symbol: string; timeframe: "1H"; type: string; createdAt: number }[] = [];
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
       onSignal: (s) => signals.push(s),
     });
 
@@ -170,7 +188,7 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const { engine } = mkEngine();
     const logger = new FakeLogger();
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
     });
 
     expect(engine.getPosition("SOLUSDT")).toBeUndefined();
@@ -190,7 +208,7 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const logger = new FakeLogger();
     const snapshots: { symbol: string; regime4h: "bull" | "neutral" | "bear" }[] = [];
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
       onRegimeSnapshot: (s) => snapshots.push(s),
     });
 
@@ -204,12 +222,12 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     data.set("SOLUSDT|1h", buildFlatNoSignal1h());
 
     const { engine } = mkEngine();
-    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
 
     const logger = new FakeLogger();
     const snapshots: { symbol: string; regime4h: "bull" | "neutral" | "bear" }[] = [];
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
       onRegimeSnapshot: (s) => snapshots.push(s),
     });
 
@@ -227,7 +245,7 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const { engine } = mkEngine();
     const logger = new FakeLogger();
     await runCycle(["BTCUSDT", "SOLUSDT", "ADAUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config: tightConfig,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config: tightConfig, tierMap: {},
     });
 
     expect(engine.getPosition("ADAUSDT")).toBeDefined(); // yüksək ADX qalib gəldi
@@ -242,18 +260,38 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     data.set("SOLUSDT|1h", buildFlatNoSignal1h());
 
     const { engine } = mkEngine();
-    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(engine.getPosition("SOLUSDT")!.state).toBe("PENDING_ENTRY");
 
     const logger = new FakeLogger();
     await runCycle(["BTCUSDT", "SOLUSDT"], {
-      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config,
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
     });
 
     // onBarClose çağırılıb — PENDING_ENTRY artıq OPEN_FULL-a fill olunub
     expect(engine.getPosition("SOLUSDT")!.state).toBe("OPEN_FULL");
     // bu simvol üçün YENİ siqnal axtarışı aparılmayıb (SIGNAL logu yoxdur)
     expect(logger.events.some((e) => e.level === "SIGNAL" && e.message.includes("SOLUSDT"))).toBe(false);
+  });
+
+  it("universe-dən düşmüş (amma açıq pozisiyası olan) simvol yenə də onBarClose alır — pozisiya 'yetim' qalmır", async () => {
+    const data = baseDataMap();
+    data.set("SOLUSDT|4h", buildStrongTrend4h());
+    data.set("SOLUSDT|1h", buildFlatNoSignal1h());
+
+    const { engine } = mkEngine();
+    engine.queueEntry({ symbol: "SOLUSDT", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
+    expect(engine.getPosition("SOLUSDT")!.state).toBe("PENDING_ENTRY");
+
+    const logger = new FakeLogger();
+    // Diqqət: universe SIRF ["BTCUSDT"] — SOLUSDT həftəlik rebalance-də universe-dən
+    // düşüb, amma açıq (PENDING_ENTRY) pozisiyası var.
+    await runCycle(["BTCUSDT"], {
+      dataLayer: new FakeDataLayer(data), executionEngine: engine, logger, config, tierMap: {},
+    });
+
+    // Universe-də olmasa belə, açıq pozisiyası olduğu üçün onBarClose çağırılıb və fill olub
+    expect(engine.getPosition("SOLUSDT")!.state).toBe("OPEN_FULL");
   });
 
   it("karantindəki aktiv keçilir, data xətası olan aktiv ERROR loglanıb ötürülür, qalanlar işləməyə davam edir", async () => {
@@ -268,7 +306,7 @@ describe("runCycle — siqnal → risk → giriş zənciri", () => {
     const { engine } = mkEngine();
     const logger = new FakeLogger();
     await runCycle(["BTCUSDT", "QUARANTINEDUSDT", "BROKENUSDT", "SOLUSDT"], {
-      dataLayer, executionEngine: engine, logger, config,
+      dataLayer, executionEngine: engine, logger, config, tierMap: {},
     });
 
     expect(logger.events.some((e) => e.level === "WARN" && e.message.includes("QUARANTINEDUSDT"))).toBe(true);

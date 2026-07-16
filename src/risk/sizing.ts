@@ -1,5 +1,6 @@
 import type { StrategyConfig } from "../config/index.js";
 import type { SizingResult } from "./types.js";
+import type { Tier } from "../universe/index.js";
 
 // ===================================================================
 // Pozisiya ölçüləndirmə (sənəd, bölmə 7).
@@ -14,14 +15,27 @@ import type { SizingResult } from "./types.js";
 // mühafizəkar nəticə, F5/notional pozuntusu yaratmır).
 // ===================================================================
 
+/** Tier-ə görə risk parametrlərini həll edir — computePositionSize və portfolioLimits.ts-in F5_MAX_TOTAL_OPEN_RISK yoxlaması bunu paylaşır, ikisi ayrı-ayrı eyni ternary-ni təkrarlamasın deyə. */
+export function resolveTierRisk(
+  tier: Tier,
+  config: Pick<StrategyConfig, "risk">,
+): { riskPerTrade: number; maxNotionalPctPerPosition: number } {
+  return tier === "TIER2"
+    ? { riskPerTrade: config.risk.tier2.riskPerTrade, maxNotionalPctPerPosition: config.risk.tier2.maxNotionalPctPerPosition }
+    : { riskPerTrade: config.risk.riskPerTrade, maxNotionalPctPerPosition: config.risk.maxNotionalPctPerPosition };
+}
+
 export function computePositionSize(
   equity: number,
   entryPrice: number,
   stopPrice: number,
   minNotional: number,
   config: StrategyConfig,
+  tier: Tier = "TIER1",
 ): SizingResult {
-  const riskAmount = equity * config.risk.riskPerTrade;
+  const { riskPerTrade, maxNotionalPctPerPosition } = resolveTierRisk(tier, config);
+
+  const riskAmount = equity * riskPerTrade;
   const stopDistance = Math.abs(entryPrice - stopPrice);
 
   if (stopDistance <= 0) {
@@ -31,7 +45,7 @@ export function computePositionSize(
   let positionSize = riskAmount / stopDistance;
   let notional = positionSize * entryPrice;
 
-  const maxNotional = equity * (config.risk.maxNotionalPctPerPosition / 100);
+  const maxNotional = equity * (maxNotionalPctPerPosition / 100);
   if (notional > maxNotional) {
     positionSize = maxNotional / entryPrice;
     notional = maxNotional;

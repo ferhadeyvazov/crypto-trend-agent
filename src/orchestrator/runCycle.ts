@@ -12,7 +12,7 @@ import { computeInitialStop } from "../execution/exitRules.js";
 import { atr as computeAtrSeries } from "../indicators/index.js";
 import type { ExecutionEngine } from "../execution/ExecutionEngine.js";
 import type { Logger } from "../logging/index.js";
-import { isCoreAsset } from "../universe/index.js";
+import { isCoreAsset, type Tier } from "../universe/index.js";
 
 // ===================================================================
 // Əsas icra dövrəsi (sənəd, bölmə 9). Hər 1h bar bağlananda universe
@@ -34,6 +34,8 @@ export interface OrchestratorDeps {
   executionEngine: ExecutionEngine;
   logger: Logger;
   config: StrategyConfig;
+  /** Cari universe-in Tier1/Tier2 xəritəsi (bax: universeSelector.ts). Xəritədə olmayan simvol TIER1 sayılır. */
+  tierMap: Record<string, Tier>;
   /** F2 (spread) — real order book mənbəyi yoxdur, defolt 0 (spread problemsiz sayılır) */
   getSpreadBps?: (symbol: string) => number;
   /** RiskManager-in minNotional-ı — defolt sabit dəyər */
@@ -68,11 +70,16 @@ interface AssetSnapshot {
 }
 
 export async function runCycle(universe: string[], deps: OrchestratorDeps): Promise<void> {
-  const { dataLayer, executionEngine, logger, config } = deps;
+  const { dataLayer, executionEngine, logger, config, tierMap } = deps;
   const getSpreadBps = deps.getSpreadBps ?? (() => 0);
   const getMinNotional = deps.getMinNotional ?? (() => DEFAULT_MIN_NOTIONAL);
 
-  const symbols = universe.includes(BTC_SYMBOL) ? universe : [BTC_SYMBOL, ...universe];
+  // Açıq pozisiyası olan simvol universe-dən (həftəlik rebalance-də) düşsə belə
+  // dövrəyə daxil edilir — əks halda bir daha onBarClose almaz və stop/TP1/
+  // trailing/regime-flip/time-stop heç vaxt işə düşməyib pozisiya əbədi açıq qalar
+  // (bax: PR review, pre-existing #3 — Tier2-nin rank churn-u bunu daha real edib).
+  const openPositionSymbols = executionEngine.getAllPositions().map((p) => p.symbol);
+  const symbols = [...new Set([BTC_SYMBOL, ...universe, ...openPositionSymbols])];
   const minHistory = config.timeframes.minHistoryBars;
 
   const snapshots = new Map<string, AssetSnapshot>();
@@ -147,6 +154,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
         direction: evaluation.signal.direction,
         isCoreAsset: isCoreAsset(symbol),
         adx4h: evaluation.signal.adx4h,
+        tier: tierMap[symbol] ?? "TIER1",
       },
       // Real fill NÖVBƏTİ bar açılışında olacaq (§10.3) — bu, sizing/stop
       // üçün TƏXMİNİ anchor qiymətdir (cari bağlanmış şamın close-u).
@@ -168,6 +176,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
       direction: p.direction as SignalDirection,
       isCoreAsset: isCoreAsset(p.symbol),
       openRiskPct: computeOpenRiskPct(p, entryPriceEstimate, equity),
+      tier: p.tier,
     }));
 
     const riskEval = evaluateRisk(
@@ -194,6 +203,7 @@ export async function runCycle(universe: string[], deps: OrchestratorDeps): Prom
       symbol: candidate.symbol,
       direction: candidate.direction,
       signalType,
+      tier: candidate.tier,
       size: riskEval.sizing.positionSize,
       atr1hAtSignal,
       regime4h: snapshots.get(candidate.symbol)!.regime4h,

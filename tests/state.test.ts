@@ -35,6 +35,7 @@ describe("FileStatePersistence", () => {
       executionEngine: { positions: [], equity: 10000 },
       universe: ["BTCUSDT"],
       universeLastRebalanceAt: 100,
+      universeTierMap: { BTCUSDT: "TIER1" },
     } as unknown as PersistedState;
 
     await persistence.save(state);
@@ -59,7 +60,7 @@ describe("ExecutionEngine.exportState / restore — round-trip", () => {
     const deps = { now: () => 1, appendTrade: (r: TradeRecord) => trades.push(r) };
     const engine = new ExecutionEngine(config, deps);
 
-    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("BTCUSDT", mkCandle(0, 100, 102, 98, 100), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
 
     const snapshot = engine.exportState();
@@ -75,7 +76,7 @@ describe("ExecutionEngine.exportState / restore — round-trip", () => {
     const deps = { now: () => 1, appendTrade: (r: TradeRecord) => trades.push(r) };
     const engine = new ExecutionEngine(config, deps);
 
-    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("BTCUSDT", mkCandle(0, 100, 102, 98, 100), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     engine.onBarClose("BTCUSDT", mkCandle(1, 95, 96, 90, 91), { regime4h: "LONG_ONLY", atr1hCurrent: 4 }); // X1 stop → bağlanır
 
@@ -106,5 +107,17 @@ describe("ExecutionEngine.exportState / restore — round-trip", () => {
     const restored = ExecutionEngine.restore(config, deps, legacySnapshot as ReturnType<typeof engine.exportState>);
     expect(restored.isEntriesPaused()).toBe(false);
     expect(restored.getEngineStateLog()).toEqual([]);
+  });
+
+  it("köhnə (tier sahəsi olmayan, Tier2-dən əvvəlki) açıq pozisiya TIER1 kimi bərpa olunur", () => {
+    const deps = { now: () => 1, appendTrade: () => {} };
+    const engine = new ExecutionEngine(config, deps);
+    engine.queueEntry({ symbol: "BTCUSDT", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
+
+    const snapshot = engine.exportState() as unknown as { positions: Record<string, unknown>[] };
+    delete snapshot.positions[0]!["tier"]; // Tier2-dən əvvəlki state.json-u simulyasiya edir
+
+    const restored = ExecutionEngine.restore(config, deps, snapshot as unknown as ReturnType<typeof engine.exportState>);
+    expect(restored.getPosition("BTCUSDT")!.tier).toBe("TIER1");
   });
 });

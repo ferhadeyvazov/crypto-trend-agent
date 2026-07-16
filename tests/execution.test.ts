@@ -57,7 +57,7 @@ describe("costModel", () => {
 describe("ExecutionEngine — giriş fill-i", () => {
   it("entry növbəti barın open-i + slippage ilə fill olunur, stop/TP1 §6 düsturu ilə hesablanır", () => {
     const { engine } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
 
     const pos = engine.getPosition("TEST")!;
@@ -69,23 +69,23 @@ describe("ExecutionEngine — giriş fill-i", () => {
 
   it("systemState RUNNING deyilsə yeni giriş rədd edilir", () => {
     const { engine } = makeEngine();
-    engine.queueEntry({ symbol: "A", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "A", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     // 6 ardıcıl itki simulyasiyası ilə PAUSED_STREAK-ə keçirək — sadə yol: birbaşa əvvəlki pozisiyanı X1 ilə bağla
     engine.onBarClose("A", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     for (let i = 0; i < config.risk.maxConsecutiveLosses; i++) {
-      engine.queueEntry({ symbol: `L${i}`, direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+      engine.queueEntry({ symbol: `L${i}`, direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
       engine.onBarClose(`L${i}`, mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
       engine.onBarClose(`L${i}`, mkCandle(1, 90, 91, 85, 88), { regime4h: "LONG_ONLY", atr1hCurrent: 4 }); // X1 stop → itki
     }
-    const result = engine.queueEntry({ symbol: "NEW", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    const result = engine.queueEntry({ symbol: "NEW", direction: "LONG", signalType: "PULLBACK", size: 1, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(result).toEqual({ queued: false, reason: "SYSTEM_NOT_RUNNING" });
     expect(engine.getSystemState()).toBe("PAUSED_STREAK");
   });
 
   it("eyni simvolda pozisiya artıq varsa rədd edilir (F3 təhlükəsizlik toru)", () => {
     const { engine } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
-    const result = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 5, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
+    const result = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 5, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(result).toEqual({ queued: false, reason: "POSITION_ALREADY_OPEN" });
   });
 });
@@ -98,12 +98,12 @@ describe("ExecutionEngine — manual pause-entries (Engine Control, dashboard/Te
     engine.pauseEntries("manual (dashboard)", 1000);
     expect(engine.isEntriesPaused()).toBe(true);
 
-    const blocked = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    const blocked = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(blocked).toEqual({ queued: false, reason: "ENTRIES_PAUSED" });
 
     engine.resumeEntries("manual (dashboard)", 2000);
     expect(engine.isEntriesPaused()).toBe(false);
-    const allowed = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    const allowed = engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     expect(allowed).toEqual({ queued: true });
   });
 
@@ -120,7 +120,7 @@ describe("ExecutionEngine — manual pause-entries (Engine Control, dashboard/Te
 
   it("pauza zamanı açıq pozisiyanın idarəsi (stop/TP) davam edir — yalnız YENİ giriş bloklanır", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
 
     engine.pauseEntries("manual (dashboard)", 1000);
@@ -135,7 +135,7 @@ describe("ExecutionEngine — manual pause-entries (Engine Control, dashboard/Te
 describe("ExecutionEngine — X1 ilkin stop", () => {
   it("stop toxunulanda (gap-siz) tam bağlanır, jurnal sətri dəqiq nəticə verir", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     engine.onBarClose("TEST", mkCandle(1, 95, 96, 90, 91), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
 
@@ -151,7 +151,7 @@ describe("ExecutionEngine — X1 ilkin stop", () => {
 
   it("gap-da (open stop-dan aşağıdır) slippagesiz open qiymətindən fill olunur", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     engine.onBarClose("TEST", mkCandle(1, 90, 91, 85, 88), { regime4h: "LONG_ONLY", atr1hCurrent: 4 }); // gap: open(90) < stop(92.85)
 
@@ -164,7 +164,7 @@ describe("ExecutionEngine — X1 ilkin stop", () => {
 describe("ExecutionEngine — eyni barda stop VƏ TP1 (STOP_FIRST, §10.3)", () => {
   it("hər ikisi toxunulanda STOP qalib gəlir (mühafizəkar fərziyyə)", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     // low(90) <= stop(92.85) VƏ high(110) >= tp1(107.25) — ikisi də toxunub
     engine.onBarClose("TEST", mkCandle(1, 100, 110, 90, 100), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
@@ -176,7 +176,7 @@ describe("ExecutionEngine — eyni barda stop VƏ TP1 (STOP_FIRST, §10.3)", () 
 describe("ExecutionEngine — X2 (TP1) → X3 (trailing stop)", () => {
   it("TP1-də 50% bağlanır, breakeven-ə keçir, sonra trailing stop qalanı bağlayır", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "BREAKOUT", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "BREAKOUT", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 }); // entry=100.05
 
     // TP1 toxunulur (high >= 107.25), stop toxunulmur
@@ -208,7 +208,7 @@ describe("ExecutionEngine — X2 (TP1) → X3 (trailing stop)", () => {
 describe("ExecutionEngine — X4 rejim dönüşü", () => {
   it("əks rejimə keçəndə qalan pozisiya bazar qiymətiylə tam bağlanır", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     engine.onBarClose("TEST", mkCandle(1, 100, 102, 99, 101), { regime4h: "SHORT_ONLY", atr1hCurrent: 4 }); // rejim döndü, stop/TP toxunulmayıb
 
@@ -219,7 +219,7 @@ describe("ExecutionEngine — X4 rejim dönüşü", () => {
 
   it("NO_TRADE rejimində pozisiya bağlanmır (R4.3 qeydi — dərhal bağlanma yoxdur)", () => {
     const { engine } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     engine.onBarClose("TEST", mkCandle(1, 100, 102, 99, 101), { regime4h: "NO_TRADE", atr1hCurrent: 4 });
 
@@ -231,7 +231,7 @@ describe("ExecutionEngine — X4 rejim dönüşü", () => {
 describe("ExecutionEngine — X5 vaxt dayanması", () => {
   it("TP1-ə çatmadan 72 bar keçəndə tam bağlanır", () => {
     const { engine, trades } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     for (let i = 1; i <= 72; i++) {
       engine.onBarClose("TEST", mkFlat(i), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
@@ -245,7 +245,7 @@ describe("ExecutionEngine — X5 vaxt dayanması", () => {
     // high/low elə HƏMİN barda yoxlanılır) — ona görə entry (1) + 70 əlavə
     // bar = 71 ümumi, X5 hələ tətiklənmir (həddi 72-dir).
     const { engine } = makeEngine();
-    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25 });
+    engine.queueEntry({ symbol: "TEST", direction: "LONG", signalType: "PULLBACK", size: 10, atr1hAtSignal: 4, regime4h: "LONG_ONLY", adx4h: 25, tier: "TIER1" });
     engine.onBarClose("TEST", mkFlat(0), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });
     for (let i = 1; i <= 70; i++) {
       engine.onBarClose("TEST", mkFlat(i), { regime4h: "LONG_ONLY", atr1hCurrent: 4 });

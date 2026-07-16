@@ -56,6 +56,7 @@ function mkPosition(overrides: Partial<Position> = {}): Position {
     direction: "LONG",
     state: "OPEN_FULL",
     signalType: "PULLBACK",
+    tier: "TIER1",
     originalSize: 10,
     remainingSize: 10,
     entryTime: 1000,
@@ -86,6 +87,7 @@ describe("toApiPosition", () => {
       id: "BTCUSDT",
       symbol: "BTCUSDT",
       side: "long",
+      tier: "TIER1",
       entryPrice: 100,
       size: 10,
       stopLoss: 92.85,
@@ -93,6 +95,11 @@ describe("toApiPosition", () => {
       openedAt: 1000,
       unrealizedPnl: 100, // (110-100)×10
     });
+  });
+
+  it("TIER2 pozisiyanı da düzgün ötürür", () => {
+    const api = toApiPosition(mkPosition({ tier: "TIER2" }), 110);
+    expect(api.tier).toBe("TIER2");
   });
 
   it("SHORT üçün currentPrice < entryPrice olduqda unrealizedPnl müsbətdir", () => {
@@ -110,7 +117,7 @@ describe("toApiPosition", () => {
 describe("toApiTrade", () => {
   it("TradeRecord-u API Trade-ə çevirir", () => {
     const trade: TradeRecord = {
-      id: "BTCUSDT-1-1", symbol: "BTCUSDT", side: "LONG", signalType: "PULLBACK",
+      id: "BTCUSDT-1-1", symbol: "BTCUSDT", side: "LONG", signalType: "PULLBACK", tier: "TIER2",
       entryTime: 1000, entryPrice: 100, stopPrice: 92.85, tp1Price: 107.25, size: 10,
       exitTime: 2000, exitPrice: 95, exitReason: "X1_INITIAL_STOP",
       grossPnl: -50, fees: 1, slippage: 0.5, netPnl: -51, rMultiple: -1,
@@ -118,7 +125,7 @@ describe("toApiTrade", () => {
     };
     const api = toApiTrade(trade);
     expect(api).toEqual({
-      id: "BTCUSDT-1-1", symbol: "BTCUSDT", side: "long", entryPrice: 100, size: 10,
+      id: "BTCUSDT-1-1", symbol: "BTCUSDT", side: "long", tier: "TIER2", entryPrice: 100, size: 10,
       stopLoss: 92.85, takeProfit: 107.25, openedAt: 1000, exitPrice: 95, closedAt: 2000,
       realizedPnl: -51, ruleCode: "PULLBACK_X1_INITIAL_STOP", exitReason: "X1_INITIAL_STOP",
     });

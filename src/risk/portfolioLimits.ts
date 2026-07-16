@@ -1,6 +1,7 @@
 import type { StrategyConfig } from "../config/index.js";
 import type { Regime } from "../signals/types.js";
 import type { OpenPositionInfo, PortfolioCandidate, PortfolioLimitResult } from "./types.js";
+import { resolveTierRisk } from "./sizing.js";
 
 // ===================================================================
 // Portfel-səviyyəli limitlər (sənəd, bölmə 8 / F5).
@@ -38,7 +39,15 @@ export function checkPortfolioLimits(
     failed.push("F5_MAX_OPEN_POSITIONS");
   }
 
-  const totalOpenRisk = openPositions.reduce((sum, p) => sum + p.openRiskPct, 0) + config.risk.riskPerTrade;
+  if (candidate.tier === "TIER2") {
+    const tier2Open = openPositions.filter((p) => p.tier === "TIER2").length;
+    if (tier2Open >= config.portfolio.maxTier2OpenPositions) {
+      failed.push("F5_MAX_TIER2_POSITIONS");
+    }
+  }
+
+  const candidateRiskPerTrade = resolveTierRisk(candidate.tier, config).riskPerTrade;
+  const totalOpenRisk = openPositions.reduce((sum, p) => sum + p.openRiskPct, 0) + candidateRiskPerTrade;
   if (totalOpenRisk > config.portfolio.maxTotalOpenRiskPct / 100) {
     failed.push("F5_MAX_TOTAL_OPEN_RISK");
   }
@@ -57,17 +66,26 @@ export function checkPortfolioLimits(
 }
 
 /**
- * BTC regime guard (bölmə 8): BTC-nin 4h rejimi zəifdirsə (SHORT_ONLY/NO_TRADE),
- * altcoin LONG girişləri üçün ADX tələbi minLong-dan (23) minAltWhenBtcWeak-a
- * (28) qalxır. BTC/ETH-in özü (isCoreAsset) bu qaydadan təsirlənmir.
+ * BTC regime guard (bölmə 8) + Tier2 daim-aktiv qaydası birləşdirilib, TƏK bir
+ * `guardActive` qərar nöqtəsində: hər ikisi eyni nəticəyə (minAltWhenBtcWeak)
+ * gətirdiyi üçün iki ayrı budaq saxlamaq oxunaqlılığı azaldırdı.
+ * - BTC-nin 4h rejimi zəifdirsə (SHORT_ONLY/NO_TRADE), altcoin LONG girişləri
+ *   üçün ADX tələbi minLong-dan (23) minAltWhenBtcWeak-a (28) qalxır.
+ *   BTC/ETH-in özü (isCoreAsset) bu qaydadan təsirlənmir.
+ * - Tier2 (rank 21-100) LONG-lar üçün bu daha sərt bar BTC rejimindən asılı
+ *   olmadan HƏMİŞƏ tələb olunur (isCoreAsset yoxlaması da bura aid deyil,
+ *   çünki əsas aktivlər onsuz da həmişə TIER1-dir) — alt-lərin trendi
+ *   Tier1-dən daha etibarsız olduğu üçün.
  */
 export function isAdxSufficientForCandidate(
-  candidate: Pick<PortfolioCandidate, "isCoreAsset" | "direction" | "adx4h">,
+  candidate: Pick<PortfolioCandidate, "isCoreAsset" | "direction" | "adx4h" | "tier">,
   btcRegime: Regime,
   config: StrategyConfig,
 ): boolean {
   const btcWeak = btcRegime === "SHORT_ONLY" || btcRegime === "NO_TRADE";
-  const guardActive = !candidate.isCoreAsset && candidate.direction === "LONG" && btcWeak;
+  const guardActive =
+    candidate.direction === "LONG" &&
+    (candidate.tier === "TIER2" || (!candidate.isCoreAsset && btcWeak));
   const minAdx = guardActive ? config.indicators.adx_4h.minAltWhenBtcWeak : config.indicators.adx_4h.minLong;
   return candidate.adx4h >= minAdx;
 }

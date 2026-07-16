@@ -89,6 +89,7 @@ export function TradesTable() {
               <tr>
                 <th className={thClass}>{t("th_closed")}</th>
                 <th className={thClass}>{t("th_symbol")}</th>
+                <th className={thClass}>{t("th_tier")}</th>
                 <th className={thClass}>{t("th_side")}</th>
                 <th className={thClass}>{t("th_entry_exit")}</th>
                 <th className={thClass}>{t("th_rule")}</th>
@@ -106,6 +107,9 @@ export function TradesTable() {
                 >
                   <td className={`${tdClass} tabular-num`}>{formatDateTime(tr.closedAt)}</td>
                   <td className={`${tdClass} tabular-num`}>{tr.symbol}</td>
+                  <td className={tdClass}>
+                    <Badge variant={tr.tier === "TIER2" ? "tier2" : "tier1"}>{tr.tier}</Badge>
+                  </td>
                   <td className={tdClass}>
                     <Badge variant={tr.side === "long" ? "long" : "short"}>{tr.side.toUpperCase()}</Badge>
                   </td>
